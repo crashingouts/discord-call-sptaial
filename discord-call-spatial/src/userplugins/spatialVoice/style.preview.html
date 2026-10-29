@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spatial Voice: reference-sized preview and theme harness</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 16px;
+            background: #14161c;
+            color: #eef2ff;
+            font: 14px/1.4 system-ui, sans-serif;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0 0 4px;
+        }
+
+        p.note {
+            margin: 0 0 14px;
+            color: #a8b2c6;
+            max-width: 78ch;
+        }
+
+        h2.stage-title {
+            font-size: 13px;
+            margin: 18px 0 6px;
+            color: #c3ccdd;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* The stage is exactly the size of the reference captures (1024x572), so a
+           screenshot of it can be compared with them pixel for pixel. */
+        #stage {
+            position: relative;
+            width: 1024px;
+            height: 572px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px -30px #000;
+        }
+
+        #stage > .sv-scene {
+            height: 572px;
+            width: 1024px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 16px;
+            margin-top: 22px;
+        }
+
+        .cell h2 {
+            font-size: 13px;
+            margin: 0 0 6px;
+            color: #c3ccdd;
+            font-weight: 600;
+        }
+
+        /* higher specificity than style.css's height: 100%, so the harness gives
+           each scene a real height to render into (in the plugin that height
+           comes from Discord's call container) */
+        .cell > .sv-scene {
+            height: 280px;
+            border-radius: 10px;
+        }
+
+        .switch {
+            display: inline-flex;
+            gap: 8px;
+            margin: 0 0 10px;
+        }
+
+        .switch a {
+            color: #9fc6ff;
+            text-decoration: none;
+            border: 1px solid #2b3a55;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 12px;
+        }
+
+        .switch a[aria-current="page"] {
+            background: #26405f;
+            color: #fff;
+        }
+
+        /* ?bare=1 renders the stage alone at its exact size, so a headless
+           screenshot of this page can be laid beside the reference captures. */
+        body.bare {
+            margin: 0;
+            padding: 0;
+            background: #000;
+        }
+
+        body.bare > *:not(#stage) {
+            display: none;
+        }
+
+        body.bare #stage {
+            border-radius: 0;
+            box-shadow: none;
+        }
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Spatial Voice: preview at the reference's own size</h1>
+    <p class="note">
+        Positions come from <code>layout.ts</code> (<code>computeSpatialLayout</code> at 1024x572, 14 simulated
+        participants, generated and checked by <code>style.test.ts</code>). Names, portraits and the call controls are
+        stand-ins: this page exists to judge composition, panel treatment, avatar rings, connector origin and control
+        bar against the two reference images, not to show a real call. The nine-theme contrast grid below the stage is
+        the older harness and still renders every palette.
+    </p>
+    <div class="switch" id="switch"></div>
+
+    <h2 class="stage-title" id="stage-title">Stage</h2>
+    <div id="stage"></div>
+
+    <h2 class="stage-title">Theme grid (contrast harness)</h2>
+    <div class="grid" id="grid"></div>
+
+    <!-- The layout fixture is generated from layout.ts; style.test.ts recomputes it
+         and fails if the two ever disagree, so this page cannot drift from the
+         engine that positions a real call. -->
+    <script type="application/json" id="sv-layout-fixture">
+{
+  "participants": [
+    {
+      "id": "p0",
+      "kind": "video",
+      "name": "Kaito"
+    },
+    {
+      "id": "p1",
+      "kind": "avatar",
+      "name": "Koh"
+    },
+    {
+      "id": "p2",
+      "kind": "avatar",
+      "name": "Ghcol"
+    },
+    {
+      "id": "p3",
+      "kind": "video",
+      "name": "Luna"
+    },
+    {
+      "id": "p4",
+      "kind": "avatar",
+      "name": "Voz"
+    },
+    {
+      "id": "p5",
+      "kind": "avatar",
+      "name": "Tara"
+    },
+    {
+      "id": "p6",
+      "kind": "video",
+      "name": "Ivy"
+    },
+    {
+      "id": "p7",
+      "kind": "avatar",
+      "name": "Sora"
+    },
+    {
+      "id": "p8",
+      "kind": "avatar",
+      "name": "Milo"
+    },
+    {
+      "id": "p9",
+      "kind": "video",
+      "name": "Vor"
+    },
+    {
+      "id": "p10",
+      "kind": "avatar",
+      "name": "Zyro"
+    },
+    {
+      "id": "p11",
+      "kind": "avatar",
+      "name": "Kali"
+    },
+    {
+      "id": "p12",
+      "kind": "video",
+      "name": "Nyx"
+    },
+    {
+      "id": "p13",
+      "kind": "avatar",
+      "name": "Jaco"
+    }
+  ],
+  "states": {
+    "selected": {
+      "width": 1024,
+      "height": 572,
+      "selectedId": "p0",
+      "items": [
+        {
+          "id": "p0",
+          "kind": "video",
+          "x": 282,
+          "y": 128,
+          "width": 461,
+          "height": 259,
+          "selected": true
+        },
+        {
+          "id": "p3",
+          "kind": "video",
+          "x": 20,
+          "y": 344,
+          "width": 129,
+          "height": 73,
+          "selected": false
+        },
+        {
+          "id": "p4",
+          "kind": "avatar",
+          "x": 902,
+          "y": 184,
+          "width": 40,
+          "height": 40,
+          "selected": false
+        },
+        {
+          "id": "p5",
+          "kind": "avatar",
+          "x": 824,
+          "y": 169,
+          "width": 41,
+          "height": 41,
+          "selected": false
+        },
+        {
+          "id": "p7",
+          "kind": "avatar",
+          "x": 29,
+          "y": 86,
+          "width": 40,
+          "height": 40,
+          "selected": false
+        },
+        {
+          "id": "p8",
+          "kind": "avatar",
+          "x": 791,
+          "y": 345,
+          "width": 39,
+          "height": 39,
+          "selected": false
+        },
+        {
+          "id": "p9",
+          "kind": "video",
+          "x": 124,
+          "y": 201,
+          "width": 136,
+          "height": 77,
+          "selected": false
+        }
+      ],
+      "name": "selected"
+    },
+    "overview": {
+      "width": 1024,
+      "height": 572,
+      "selectedId": null,
+      "items": [
+        {
+          "id": "p0",
+          "kind": "video",
+          "x": 118,
+          "y": 198,
+          "width": 152,
+          "height": 86,
+          "selected": false
+        },
+        {
+          "id": "p1",
+          "kind": "avatar",
+          "x": 390,
+          "y": 94,
+          "width": 41,
+          "height": 41,
+          "selected": false
+        },
+        {
+          "id": "p2",
+          "kind": "avatar",
+          "x": 665,
+          "y": 197,
+          "width": 37,
+          "height": 37,
+          "selected": false
+        },
+        {
+          "id": "p3",
+          "kind": "video",
+          "x": 20,
+          "y": 344,
+          "width": 129,
+          "height": 73,
+          "selected": false
+        },
+        {
+          "id": "p4",
+          "kind": "avatar",
+          "x": 902,
+          "y": 184,
+          "width": 40,
+          "height": 40,
+          "selected": false
+        },
+        {
+          "id": "p5",
+          "kind": "avatar",
+          "x": 824,
+          "y": 169,
+          "width": 41,
+          "height": 41,
+          "selected": false
+        },
+        {
+          "id": "p6",
+          "kind": "video",
+          "x": 501,
+          "y": 60,
+          "width": 143,
+          "height": 80,
+          "selected": false
+        },
+        {
+          "id": "p7",
+          "kind": "avatar",
+          "x": 29,
+          "y": 86,
+          "width": 40,
+          "height": 40,
+          "selected": false
+        },
+        {
+          "id": "p8",
+          "kind": "avatar",
+          "x": 791,
+          "y": 345,
+          "width": 39,
+          "height": 39,
+          "selected": false
+        },
+        {
+          "id": "p9",
+          "kind": "video",
+          "x": 552,
+          "y": 301,
+          "width": 136,
+          "height": 77,
+          "selected": false
+        }
+      ],
+      "name": "overview"
+    },
+    "small": {
+      "width": 360,
+      "height": 280,
+      "selectedId": null,
+      "items": [
+        {
+          "id": "p7",
+          "kind": "avatar",
+          "x": 78,
+          "y": 83,
+          "width": 26,
+          "height": 26,
+          "selected": false
+        },
+        {
+          "id": "p9",
+          "kind": "video",
+          "x": 229,
+          "y": 61,
+          "width": 88,
+          "height": 50,
+          "selected": false
+        }
+      ],
+      "name": "small"
+    }
+  }
+}
+    </script>
+
+    <script>
+        const THEMES = [
+            ["dark-space", "Dark Space (default)"],
+            ["aurora", "Aurora"],
+            ["sunset", "Sunset"],
+            ["forest", "Forest"],
+            ["ocean", "Ocean"],
+            ["cyberpunk", "Cyberpunk"],
+            ["minimal", "Minimal (light)"],
+            ["dark-red", "Dark Red"],
+            ["purple-galaxy", "Purple Galaxy"]
+        ];
+
+        const AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect width='96' height='96' fill='%23253145'/%3E%3Ccircle cx='48' cy='38' r='17' fill='%23c7d6ea'/%3E%3Crect x='20' y='62' width='56' height='34' rx='17' fill='%23c7d6ea'/%3E%3C/svg%3E";
+        const CAMERA = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='320' height='180' fill='%23202b3d'/%3E%3Ccircle cx='160' cy='72' r='34' fill='%23435a78'/%3E%3Crect x='86' y='112' width='148' height='68' rx='34' fill='%23435a78'/%3E%3C/svg%3E";
+
+        const fixture = JSON.parse(document.getElementById("sv-layout-fixture").textContent);
+        const wanted = new URLSearchParams(location.search).get("themes");
+        const state = new URLSearchParams(location.search).get("state") === "overview" ? "overview" : "selected";
+        const theme = new URLSearchParams(location.search).get("theme") || "dark-space";
+        const names = new Map(fixture.participants.map(participant => [participant.id, participant]));
+
+        function sceneMarkup(themeId, items, selectedId, width, height) {
+            const originX = width / 2;
+            const originY = height * 0.9;
+            const lines = items
+                .map((item, index) => {
+                    const x = item.x + item.width / 2;
+                    const y = item.y + item.height / 2;
+                    const emphasized = index % 3 === 0 ? ' data-sv-speaking="true"' : "";
+                    return `<line class="sv-connector"${emphasized} x1="${originX}" y1="${originY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"></line>`;
+                })
+                .join("");
+            const people = items
+                .map(item => {
+                    const person = names.get(item.id);
+                    const selected = item.id === selectedId;
+                    const cx = ((item.x + item.width / 2) / width) * 100;
+                    const cy = ((item.y + item.height / 2) / height) * 100;
+                    const speaking = item.kind === "avatar" && item.id === "p2";
+                    const media = item.kind === "video"
+                        ? `<div class="sv-video" data-sv-selected="${selected}" style="width:${item.width}px;height:${item.height}px">
+                               <img src="${CAMERA}" alt="">
+                               ${selected ? '<span class="sv-badge">Live</span>' : ""}
+                           </div>`
+                        : `<div class="sv-avatar" style="width:${item.width}px;height:${item.height}px">
+                               <img class="sv-avatar-image" src="${AVATAR}" alt="">
+                           </div>`;
+                    return `<div class="sv-participant" data-sv-selected="${selected}" data-sv-speaking="${speaking}"
+                                data-sv-camera="${item.kind === "video" ? "on" : "off"}"
+                                role="button" tabindex="0" aria-label="${person.name}, ${item.kind === "video" ? "camera on" : "camera off"}"
+                                style="left:${cx.toFixed(2)}%;top:${cy.toFixed(2)}%">
+                                ${media}
+                                <span class="sv-label">${person.name}</span>
+                            </div>`;
+                })
+                .join("");
+            return `<div class="sv-scene" data-sv-theme="${themeId}" data-sv-scheme="${themeId === "minimal" ? "light" : "dark"}" style="width:${width}px;height:${height}px">
+                        <div class="sv-background" aria-hidden="true"></div>
+                        <div class="sv-connectors" aria-hidden="true">
+                            <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>
+                        </div>
+                        ${people}
+                        <div class="sv-controls" role="toolbar" aria-label="Call controls (simulated)">
+                            <button type="button" aria-label="Microphone">Mic</button>
+                            <button type="button" aria-label="Camera">Cam</button>
+                            <button type="button" aria-label="Share screen">Share</button>
+                            <button type="button" aria-label="35 people">35</button>
+                            <button type="button" class="buttonDanger" aria-label="Disconnect">Leave</button>
+                        </div>
+                    </div>`;
+        }
+
+        if (new URLSearchParams(location.search).get("bare") === "1") {
+            document.body.classList.add("bare");
+        }
+
+        const stage = fixture.states[state];
+        document.getElementById("stage").innerHTML =
+            sceneMarkup(theme, stage.items, stage.selectedId, stage.width, stage.height);
+
+        document.getElementById("stage-title").textContent =
+            `${state === "selected" ? "Selected feed" : "Overview"} at ${stage.width}x${stage.height}, ${stage.items.length} simulated participants, ${theme}`;
+
+        const links = [["selected", "Selected feed"], ["overview", "Overview"]]
+            .map(([value, label]) =>
+                `<a href="?state=${value}&theme=${theme}"${value === state ? ' aria-current="page"' : ""}>${label}</a>`
+            )
+            .join("");
+        document.getElementById("switch").innerHTML = links;
+
+        const selectedThemes = wanted
+            ? THEMES.filter(([themeId]) => wanted.split(",").includes(themeId))
+            : THEMES;
+
+        document.getElementById("grid").innerHTML = selectedThemes
+            .map(([themeId, title]) => {
+                const small = fixture.states.small;
+                return `<section class="cell">
+                    <h2>${title}</h2>
+                    ${sceneMarkup(themeId, small.items, null, small.width, small.height)}
+                </section>`;
+            })
+            .join("");
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,34 @@
+{
+  "url": "https://canary.discord.com/channels/505974446914535426/1122346238763868170",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1
+  },
+  "plugin": null,
+  "call": {
+    "voiceChannelId": null,
+    "selectedChannelId": "1122346238763868170",
+    "inCall": true
+  },
+  "mounted": {
+    "host": true,
+    "scene": true,
+    "toggle": false
+  },
+  "toggle": null,
+  "layout": {
+    "layoutGridTag": "DIV",
+    "layoutGridClass": "base__5e434",
+    "columns": "[start] 72px [guildsEnd] 360px [channelsEnd] 1488px [end]",
+    "columnsInline": "",
+    "page": {
+      "left": 432,
+      "top": 32,
+      "width": 1488,
+      "height": 1048
+    },
+    "sidebar": null,
+    "sidebarDisplay": null
+  }
+}

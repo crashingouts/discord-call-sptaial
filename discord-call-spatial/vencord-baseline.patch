@@ -1,0 +1,32 @@
+diff --git a/eslint.config.mjs b/eslint.config.mjs
+index aa3ee641..10f92067 100644
+--- a/eslint.config.mjs
++++ b/eslint.config.mjs
+@@ -13,7 +13,7 @@ import unusedImports from "eslint-plugin-unused-imports";
+ import tseslint from "typescript-eslint";
+ 
+ export default tseslint.config(
+-    { ignores: ["dist", "browser", "packages/vencord-types"] },
++    { ignores: ["dist", "browser", "packages/vencord-types", "**/.preview"] },
+     {
+         files: ["src/**/*.{tsx,ts,mts,mjs,js,jsx}", "eslint.config.mjs"],
+         settings: {
+diff --git a/package.json b/package.json
+index 83c51bf9..e6eb48d0 100644
+--- a/package.json
++++ b/package.json
+@@ -32,7 +32,13 @@
+         "lint:fix": "pnpm lint --fix",
+         "test": "pnpm buildStandalone && pnpm testTsc && pnpm lint && pnpm lint-styles && pnpm generatePluginJson",
+         "testWeb": "pnpm lint && pnpm buildWeb && pnpm testTsc",
+-        "testTsc": "tsc --noEmit"
++        "testTsc": "tsc --noEmit",
++        "test:streamzoom": "tsx --test src/userplugins/streamZoom/tests/*.test.ts",
++        "test:modradar": "tsx --test src/userplugins/modRadar/tests/*.test.ts",
++        "test:depth3d": "tsx --test src/userplugins/discordDepth3d/tests/*.test.ts",
++        "test:depth3d:ui": "node src/userplugins/discordDepth3d/tests/harness.mjs",
++        "test:antiearrape": "node --experimental-transform-types --import ./src/userplugins/AntiEarrapePro/tests/loader.mjs --test src/userplugins/AntiEarrapePro/tests/behavior.test.mjs src/userplugins/AntiEarrapePro/tests/graph.test.mjs src/userplugins/AntiEarrapePro/tests/layout.test.mjs src/userplugins/AntiEarrapePro/tests/limiter.test.mjs src/userplugins/AntiEarrapePro/tests/native-stats.test.mjs src/userplugins/AntiEarrapePro/tests/startup.test.mjs",
++        "test:e2e": "node src/userplugins/streamZoom/tests/preview.mjs && node src/userplugins/streamZoom/tests/harness.mjs"
+     },
+     "dependencies": {
+         "@intrnl/xxhash64": "^0.1.2",

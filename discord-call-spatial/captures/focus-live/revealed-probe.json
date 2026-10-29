@@ -1,0 +1,73 @@
+{
+  "url": "https://canary.discord.com/channels/505974446914535426/1122346238763868170",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1
+  },
+  "plugin": {
+    "name": "Spatial Voice",
+    "enabled": true,
+    "spatialEnabled": true,
+    "started": false
+  },
+  "call": {
+    "voiceChannelId": null,
+    "inCall": true
+  },
+  "mounted": {
+    "host": true,
+    "scene": true,
+    "toggle": true
+  },
+  "toggle": {
+    "focused": "false",
+    "label": "Focus the call",
+    "chevron": "left",
+    "rect": {
+      "left": 444,
+      "top": 44,
+      "width": 32,
+      "height": 32
+    },
+    "zIndex": "30"
+  },
+  "layout": {
+    "layoutGridClass": "base__5e434",
+    "columns": "[start] 72px [guildsEnd] 360px [channelsEnd] 1488px [end]",
+    "columnsInline": "",
+    "page": {
+      "left": 432,
+      "top": 32,
+      "width": 1488,
+      "height": 1048
+    },
+    "sidebar": {
+      "left": 0,
+      "top": 32,
+      "width": 432,
+      "height": 1048
+    },
+    "sidebarDisplay": "grid",
+    "guilds": {
+      "left": 0,
+      "top": 32,
+      "width": 72,
+      "height": 897
+    },
+    "bodyScrollWidth": 1920
+  },
+  "sceneDiag": {
+    "width": 1488,
+    "height": 1048,
+    "page": 1,
+    "pageCount": 1,
+    "placed": 8,
+    "overflow": 0,
+    "emphasized": [
+      "975166084439212062",
+      "1561963985685975094",
+      "1487765224605093919"
+    ]
+  }
+}

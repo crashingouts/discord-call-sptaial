@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spatial Voice: call focus toggle, both states</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 18px 20px 40px;
+            background: #14161c;
+            color: #eef2ff;
+            font: 14px/1.45 system-ui, sans-serif;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0 0 6px;
+        }
+
+        p.note {
+            margin: 0 0 18px;
+            max-width: 82ch;
+            color: #a8b2c6;
+        }
+
+        code {
+            color: #cfe3ff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 18px;
+        }
+
+        .panel h2 {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: #c3ccdd;
+            margin: 0 0 6px;
+        }
+
+        .panel p {
+            margin: 0 0 8px;
+            font-size: 12px;
+            color: #8d99ad;
+            max-width: 46ch;
+        }
+
+        /* ---- the stand-in for Discord's call chrome -----------------------
+           This is the screenshot's own context: a dark header strip holding the
+           corner control, the "35 people in cell" pill and the caption under
+           it, with the call itself beneath. None of these classes are styled by
+           style.css; the control inside them is. */
+        .chrome {
+            position: relative;
+            height: 208px;
+            border-radius: 10px;
+            overflow: hidden;
+            background:
+                radial-gradient(120% 90% at 50% 120%, #12203a 0%, #0a1019 58%, #05080e 100%);
+            box-shadow: inset 0 0 0 1px #1d2735, 0 20px 50px -30px #000;
+        }
+
+        .chrome-header {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px 8px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            color: #e7edf7;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .pill svg {
+            width: 15px;
+            height: 15px;
+            opacity: 0.85;
+        }
+
+        .caption {
+            margin: 2px 0 0 46px;
+            color: #9aa6ba;
+            font-size: 12px;
+        }
+
+        .call-body {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 12px 14px;
+        }
+
+        .call-body span {
+            height: 44px;
+            border-radius: 8px;
+            background: linear-gradient(160deg, #16233a, #0b1220);
+            box-shadow: inset 0 0 0 1px rgba(120, 170, 240, 0.14);
+        }
+
+        /* a scene-hosted control, to show the same stylesheet taking the theme's
+           own tokens instead of its fallbacks */
+        .scene-host {
+            position: relative;
+            height: 208px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .scene-host > .sv-scene {
+            height: 208px;
+            border-radius: 10px;
+        }
+
+        .scene-note {
+            position: absolute;
+            right: 12px;
+            bottom: 10px;
+            z-index: 5;
+            color: #a9bbd8;
+            font-size: 11px;
+        }
+
+        /* the no-call panel: a scene mounted over a page, exactly as the plugin
+           mounts one, and a page underneath that must stay readable */
+        .shell-page {
+            position: relative;
+        }
+
+        .shell-page > .empty-scene {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        /* ?panel=<id> shows one panel alone, for a screenshot of that state */
+        body.single .panel:not(.is-target) {
+            display: none;
+        }
+
+        body.single .grid {
+            grid-template-columns: minmax(0, 1fr);
+            max-width: 900px;
+        }
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Call focus toggle: both states, the same stylesheet</h1>
+    <p class="note">
+        Every control on this page is one <code>.sv-call-focus-toggle</code> from
+        <code>style.css</code>: this page adds no rule of its own for it, so what you see is what the plugin
+        paints. <strong>Hover</strong> a control for its hover state and <strong>press Tab</strong> from the top
+        of the page to reach the focus ring. The two panels on the first row put the control where the screenshot
+        has it, in Discord's own chrome, outside the scene, in the header's own row before the participant pill
+        (<code>data-sv-placement="inline"</code>). The second row puts it in a scene, at the corner of its host
+        (the default placement), where the theme tokens replace the fallbacks.
+    </p>
+
+    <div class="grid">
+        <section class="panel" id="focused" data-panel="focused">
+            <h2>Call owns the window: data-sv-focused="true"</h2>
+            <p>
+                Discord's interface is hidden. The chevron stays as authored and points right, at the interface a
+                press brings back.
+            </p>
+            <div class="chrome">
+                <div class="chrome-header">
+                    <button type="button" class="sv-call-focus-toggle" data-sv-focused="true" aria-pressed="true"
+                        aria-label="Show Discord's interface">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                            <path d="M9 5.5 16 12l-7 6.5" fill="none" stroke="currentColor" stroke-width="2.4"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                    <span class="pill">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <circle cx="9" cy="9" r="3.2" fill="currentColor" />
+                            <path d="M3 19c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4z" fill="currentColor" />
+                            <circle cx="17" cy="10" r="2.4" fill="currentColor" opacity="0.75" />
+                            <path d="M14.6 19c.1-3 1.6-4.6 4.4-4.6 1.5 0 2.6.5 3 1.6l-1.4 3z" fill="currentColor"
+                                opacity="0.75" />
+                        </svg>
+                        35 people in cell
+                    </span>
+                </div>
+                <p class="caption">You're in a voice channel</p>
+                <div class="call-body">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" id="showing" data-panel="showing">
+            <h2>Discord's interface showing: data-sv-focused="false"</h2>
+            <p>
+                The interface is on screen, so the chevron is reversed and points left, at the call a press hands
+                the window back to.
+            </p>
+            <div class="chrome">
+                <div class="chrome-header">
+                    <button type="button" class="sv-call-focus-toggle" data-sv-focused="false" aria-pressed="false"
+                        aria-label="Fill the window with the call">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                            <path d="M9 5.5 16 12l-7 6.5" fill="none" stroke="currentColor" stroke-width="2.4"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                    <span class="pill">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <circle cx="9" cy="9" r="3.2" fill="currentColor" />
+                            <path d="M3 19c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4z" fill="currentColor" />
+                            <circle cx="17" cy="10" r="2.4" fill="currentColor" opacity="0.75" />
+                            <path d="M14.6 19c.1-3 1.6-4.6 4.4-4.6 1.5 0 2.6.5 3 1.6l-1.4 3z" fill="currentColor"
+                                opacity="0.75" />
+                        </svg>
+                        35 people in cell
+                    </span>
+                </div>
+                <p class="caption">You're in a voice channel</p>
+                <div class="call-body">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" id="in-scene" data-panel="in-scene">
+            <h2>Inside a scene: the theme's tokens, not the fallbacks</h2>
+            <p>
+                The same control, mounted in a scene, so its surface, edge, ink and hover come from the scene
+                palette and a theme switch repaints it with everything else. Add
+                <code>&amp;sceneTheme=minimal</code> to this page's URL to see the light palette.
+            </p>
+            <div class="scene-host">
+                <div class="sv-scene" data-sv-theme="dark-space" data-sv-scheme="dark">
+                    <div class="sv-background" aria-hidden="true"></div>
+                    <button type="button" class="sv-call-focus-toggle" data-sv-focused="true" aria-pressed="true"
+                        aria-label="Show Discord's interface">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                            <path d="M9 5.5 16 12l-7 6.5" fill="none" stroke="currentColor" stroke-width="2.4"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                    <!-- one stand-in participant: a scene paints its backdrop only while a call
+                         has somebody in it, so the preview has to show one for the palette to
+                         appear at all -->
+                    <div class="sv-participant" data-sv-camera="off" data-sv-selected="true"
+                        style="left: 68%; top: 52%;">
+                        <div class="sv-avatar">
+                            <img class="sv-avatar-image"
+                                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%232b3a55'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%238fb4e0'/%3E%3Cpath d='M8 64c0-13 11-21 24-21s24 8 24 21z' fill='%238fb4e0'/%3E%3C/svg%3E"
+                                alt="">
+                        </div>
+                        <span class="sv-label">Stand-in participant</span>
+                    </div>
+                    <span class="scene-note">scene background painted by style.css</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" id="empty-scene" data-panel="empty-scene">
+            <h2>No call on screen: the scene paints nothing</h2>
+            <p>
+                The same scene element with no <code>.sv-participant</code> in it, mounted over a stand-in for
+                Discord's own page. Its opaque base, its orbit arcs and its vortex are gone, so the page underneath
+                stays readable, which is what keeps a mounted-but-empty scene from turning the whole window into the
+                spatial backdrop. The control itself is untouched.
+            </p>
+            <div class="chrome shell-page">
+                <div class="chrome-header">
+                    <span class="pill">Friends</span>
+                    <span class="pill">Add Friend</span>
+                </div>
+                <p class="caption">This line belongs to the page under the scene.</p>
+                <div class="call-body">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <div class="sv-scene empty-scene" data-sv-theme="dark-space" data-sv-scheme="dark">
+                    <div class="sv-background" aria-hidden="true"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" id="keyboard" data-panel="keyboard">
+            <h2>Keyboard focus: :focus-visible</h2>
+            <p>
+                The control takes a real focus ring, 2px in the theme's focus colour, offset from the edge. This
+                panel focuses it with a keyboard, so the ring is the browser's own <code>:focus-visible</code>.
+            </p>
+            <div class="chrome">
+                <div class="chrome-header">
+                    <button type="button" class="sv-call-focus-toggle" data-sv-focused="true" aria-pressed="true"
+                        aria-label="Show Discord's interface" data-autofocus="keyboard">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                            <path d="M9 5.5 16 12l-7 6.5" fill="none" stroke="currentColor" stroke-width="2.4"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                    <span class="pill">35 people in cell</span>
+                </div>
+                <p class="caption">You're in a voice channel</p>
+                <div class="call-body">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(location.search);
+
+        const panel = params.get("panel");
+        if (panel) {
+            document.body.classList.add("single");
+            const target = document.querySelector(`[data-panel="${panel}"]`);
+            if (target) target.classList.add("is-target");
+        }
+
+        // Discord's call header places the control in its own row, before the
+        // participant pill, so the three header panels ask for the inline
+        // placement. The scene panel keeps the default: the corner of its host.
+        document.querySelectorAll(".chrome-header .sv-call-focus-toggle").forEach(button => {
+            button.setAttribute("data-sv-placement", "inline");
+        });
+
+        // ?sceneTheme=minimal repaints the in-scene panel in another palette, so
+        // the same stylesheet's token use can be seen taking a light theme too.
+        const sceneTheme = params.get("sceneTheme");
+        const inScene = document.querySelector(".scene-host > .sv-scene");
+        if (sceneTheme && inScene) {
+            inScene.setAttribute("data-sv-theme", sceneTheme);
+            inScene.setAttribute("data-sv-scheme", sceneTheme === "minimal" ? "light" : "dark");
+        }
+
+        // A button only matches :focus-visible when the browser thinks the last
+        // interaction was the keyboard, so the harness says so before focusing.
+        // Chrome needs a real key event for that, which the driver sends; this is
+        // the fallback for a plain browser.
+        const autofocus = document.querySelector('[data-autofocus="keyboard"]');
+        if (autofocus) {
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+            autofocus.focus({ preventScroll: true });
+        }
+    </script>
+</body>
+
+</html>

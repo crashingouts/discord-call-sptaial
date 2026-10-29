@@ -1,0 +1,41 @@
+{
+    "extends": "C:/Users/User/Documents/Vencord/tsconfig.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "rootDir": "C:/Users/User",
+        "skipLibCheck": true,
+        "allowImportingTsExtensions": true,
+        "paths": {
+            "@main/*": ["C:/Users/User/Documents/Vencord/src/main/*"],
+            "@api/*": ["C:/Users/User/Documents/Vencord/src/api/*"],
+            "@components/*": ["C:/Users/User/Documents/Vencord/src/components/*"],
+            "@debug/*": ["C:/Users/User/Documents/Vencord/src/debug/*"],
+            "@utils/*": ["C:/Users/User/Documents/Vencord/src/utils/*"],
+            "@plugins/*": ["C:/Users/User/Documents/Vencord/src/plugins/*"],
+            "@shared/*": ["C:/Users/User/Documents/Vencord/src/shared/*"],
+            "@webpack/common": ["C:/Users/User/Documents/Vencord/src/webpack/common"],
+            "@webpack/common/*": ["C:/Users/User/Documents/Vencord/src/webpack/common/*"],
+            "@webpack": ["C:/Users/User/Documents/Vencord/src/webpack/webpack"],
+            "@webpack/patcher": ["C:/Users/User/Documents/Vencord/src/webpack/patchWebpack"],
+            "@webpack/wreq.d": ["C:/Users/User/Documents/Vencord/src/webpack/wreq.d"],
+            "@webpack/types": ["C:/Users/User/Documents/Vencord/src/webpack/types"],
+            "react": ["C:/Users/User/Documents/Vencord/node_modules/@types/react"],
+            "react/*": ["C:/Users/User/Documents/Vencord/node_modules/@types/react/*"]
+        }
+    },
+    "include": [
+        "src/userplugins/spatialVoice/index.tsx",
+        "src/userplugins/spatialVoice/integration.tsx",
+        "src/userplugins/spatialVoice/SpatialScene.tsx",
+        "src/userplugins/spatialVoice/settings.ts",
+        "src/userplugins/spatialVoice/types.ts",
+        "src/userplugins/spatialVoice/layout.ts",
+        "src/userplugins/spatialVoice/speaking.ts",
+        "src/userplugins/spatialVoice/connectors.ts",
+        "src/userplugins/spatialVoice/runtimeDom.ts",
+        "src/userplugins/spatialVoice/callFocus.ts",
+        "C:/Users/User/Documents/Vencord/src/modules.d.ts",
+        "C:/Users/User/Documents/Vencord/src/globals.d.ts",
+        "C:/Users/User/Documents/Vencord/src/nativeModules.d.ts"
+    ]
+}

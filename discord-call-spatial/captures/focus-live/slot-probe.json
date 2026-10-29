@@ -1,0 +1,1720 @@
+{
+  "title": "Public | #3 | Socialize | Active VC Server • Hangout • Voice Chat • Call • Social • Chill • Anime • Memes • Emojis",
+  "window": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1
+  },
+  "tiles": 28,
+  "surface": {
+    "tag": "div",
+    "cls": "root_bfe55a",
+    "label": null,
+    "box": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080,
+      "bottom": 1080,
+      "right": 1920
+    },
+    "zIndex": "auto",
+    "position": "relative"
+  },
+  "fullscreenControl": {
+    "tag": "button",
+    "cls": "rightTrayIcon_cb9592 button__201d5 lookBlank__201d5 colorBrand__201d5 ",
+    "label": "Exit Full Screen",
+    "box": {
+      "left": 1880,
+      "top": 1040,
+      "width": 24,
+      "height": 24,
+      "bottom": 1064,
+      "right": 1904
+    },
+    "zIndex": "auto",
+    "position": "relative"
+  },
+  "toggle": {
+    "tag": "button",
+    "cls": "sv-call-focus-toggle",
+    "label": "Show the rest of Discord",
+    "box": {
+      "left": 12,
+      "top": 12,
+      "width": 32,
+      "height": 32,
+      "bottom": 44,
+      "right": 44
+    },
+    "zIndex": "1100",
+    "position": "absolute",
+    "focused": "true",
+    "inline": null
+  },
+  "toggleHit": {
+    "at": [
+      28,
+      28
+    ],
+    "hit": "sv-call-focus-toggle",
+    "chain": [
+      "sv-call-focus-toggle",
+      "root_bfe55a",
+      "callContainer_cb9592 fullScreen_cb9592 theme-dark ",
+      "wrapper_cb9592 fullScreen_cb9592 video_cb9592"
+    ]
+  },
+  "buttons": [
+    {
+      "tag": "button",
+      "cls": "button__201d5 lookBlank__201d5 colorBrand__201d5 grow__201d5 button__9",
+      "label": "Show Chat",
+      "box": {
+        "left": 1880,
+        "top": 12.5,
+        "width": 24,
+        "height": 24,
+        "bottom": 36.5,
+        "right": 1904
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "button",
+      "cls": "leftTrayIcon_cb9592 button__201d5 lookBlank__201d5 colorBrand__201d5 g",
+      "label": "Invite",
+      "box": {
+        "left": 16,
+        "top": 1040,
+        "width": 24,
+        "height": 24,
+        "bottom": 1064,
+        "right": 40
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "button",
+      "cls": "centerButton_f1ceac colorable_f1ceac primaryDark_f1ceac attachedButton",
+      "label": "Mute",
+      "box": {
+        "left": 756,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 794
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "contextMenuNub_f1ceac colorable_f1ceac attachedCaret_f1ceac primaryDar",
+      "label": "More Microphone Options",
+      "box": {
+        "left": 795,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 833
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "centerButton_f1ceac colorable_f1ceac primaryDark_f1ceac attachedButton",
+      "label": "Turn On Camera",
+      "box": {
+        "left": 841,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 879
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "contextMenuNub_f1ceac colorable_f1ceac attachedCaret_f1ceac primaryDar",
+      "label": "More Camera Options",
+      "box": {
+        "left": 880,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 918
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "centerButton_f1ceac colorable_f1ceac primaryDark_f1ceac button__201d5 ",
+      "label": "Share Your Screen",
+      "box": {
+        "left": 936,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 974
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "centerButton_f1ceac colorable_f1ceac primaryDark_f1ceac button__201d5 ",
+      "label": "Start An Activity",
+      "box": {
+        "left": 982,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 1020
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "centerButton_f1ceac colorable_f1ceac primaryDark_f1ceac button__201d5 ",
+      "label": "Open Soundboard",
+      "box": {
+        "left": 1028,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 1066
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "centerButton_f1ceac colorable_f1ceac primaryDark_f1ceac button__201d5 ",
+      "label": "More Options",
+      "box": {
+        "left": 1074,
+        "top": 996,
+        "width": 38,
+        "height": 38,
+        "bottom": 1034,
+        "right": 1112
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "centerButton_f1ceac colorable_f1ceac disconnect_f1ceac fullRegionButto",
+      "label": "Disconnect",
+      "box": {
+        "left": 1125,
+        "top": 996,
+        "width": 44,
+        "height": 38,
+        "bottom": 1034,
+        "right": 1169
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "rightTrayIcon_cb9592 button__201d5 lookBlank__201d5 colorBrand__201d5 ",
+      "label": "Exit Full Screen",
+      "box": {
+        "left": 1880,
+        "top": 1040,
+        "width": 24,
+        "height": 24,
+        "bottom": 1064,
+        "right": 1904
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, stream, koolade8446",
+      "box": {
+        "left": 124,
+        "top": 64,
+        "width": 0,
+        "height": 0,
+        "bottom": 64,
+        "right": 124
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 md_a22cb0 secondary_a22cb0 hasText_a22cb0",
+      "label": null,
+      "box": {
+        "left": 223.5,
+        "top": 136.3,
+        "width": 129.1,
+        "height": 40,
+        "bottom": 176.3,
+        "right": 352.5
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, stream, elasticpaper.v2",
+      "box": {
+        "left": 460,
+        "top": 64,
+        "width": 0,
+        "height": 0,
+        "bottom": 64,
+        "right": 460
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 md_a22cb0 secondary_a22cb0 hasText_a22cb0",
+      "label": null,
+      "box": {
+        "left": 559.5,
+        "top": 136.3,
+        "width": 129.1,
+        "height": 40,
+        "bottom": 176.3,
+        "right": 688.5
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, stream, eii1399",
+      "box": {
+        "left": 796,
+        "top": 64,
+        "width": 0,
+        "height": 0,
+        "bottom": 64,
+        "right": 796
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 md_a22cb0 secondary_a22cb0 hasText_a22cb0",
+      "label": null,
+      "box": {
+        "left": 895.5,
+        "top": 136.3,
+        "width": 129.1,
+        "height": 40,
+        "bottom": 176.3,
+        "right": 1024.5
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, 3f2g",
+      "box": {
+        "left": 1132,
+        "top": 64,
+        "width": 0,
+        "height": 0,
+        "bottom": 64,
+        "right": 1132
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, _bricker_",
+      "box": {
+        "left": 1468,
+        "top": 64,
+        "width": 0,
+        "height": 0,
+        "bottom": 64,
+        "right": 1468
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, koolade8446",
+      "box": {
+        "left": 124,
+        "top": 256.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 256.5,
+        "right": 124
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, link_1999_",
+      "box": {
+        "left": 460,
+        "top": 256.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 256.5,
+        "right": 460
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, whoosh.idc",
+      "box": {
+        "left": 796,
+        "top": 256.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 256.5,
+        "right": 796
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, stream, qz5430",
+      "box": {
+        "left": 1132,
+        "top": 256.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 256.5,
+        "right": 1132
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 md_a22cb0 secondary_a22cb0 hasText_a22cb0",
+      "label": null,
+      "box": {
+        "left": 1231.5,
+        "top": 328.8,
+        "width": 129.1,
+        "height": 40,
+        "bottom": 368.8,
+        "right": 1360.5
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, r_o_r_o",
+      "box": {
+        "left": 1468,
+        "top": 256.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 256.5,
+        "right": 1468
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, stream, grazdgfx",
+      "box": {
+        "left": 124,
+        "top": 449,
+        "width": 0,
+        "height": 0,
+        "bottom": 449,
+        "right": 124
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 md_a22cb0 secondary_a22cb0 hasText_a22cb0",
+      "label": null,
+      "box": {
+        "left": 223.5,
+        "top": 521.3,
+        "width": 129.1,
+        "height": 40,
+        "bottom": 561.3,
+        "right": 352.5
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, waynedmane",
+      "box": {
+        "left": 460,
+        "top": 449,
+        "width": 0,
+        "height": 0,
+        "bottom": 449,
+        "right": 460
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, elasticpaper.v2",
+      "box": {
+        "left": 796,
+        "top": 449,
+        "width": 0,
+        "height": 0,
+        "bottom": 449,
+        "right": 796
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, bd_d0",
+      "box": {
+        "left": 1132,
+        "top": 449,
+        "width": 0,
+        "height": 0,
+        "bottom": 449,
+        "right": 1132
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, eii1399",
+      "box": {
+        "left": 1468,
+        "top": 449,
+        "width": 0,
+        "height": 0,
+        "bottom": 449,
+        "right": 1468
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, qz5430",
+      "box": {
+        "left": 124,
+        "top": 641.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 641.5,
+        "right": 124
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "slayerGiftingPlayingGameButton__2f4f7 experimentOverlayTitle__2f4f7",
+      "label": "View Game Profile",
+      "box": {
+        "left": 193,
+        "top": 782,
+        "width": 235,
+        "height": 32,
+        "bottom": 814,
+        "right": 428
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, grazdgfx",
+      "box": {
+        "left": 460,
+        "top": 641.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 641.5,
+        "right": 460
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, dannyc6.",
+      "box": {
+        "left": 796,
+        "top": 641.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 641.5,
+        "right": 796
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, burtsbeesfanacc",
+      "box": {
+        "left": 1132,
+        "top": 641.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 641.5,
+        "right": 1132
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, whoisyoumf",
+      "box": {
+        "left": 1468,
+        "top": 641.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 641.5,
+        "right": 1468
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, runts_cruz",
+      "box": {
+        "left": 124,
+        "top": 834,
+        "width": 0,
+        "height": 0,
+        "bottom": 834,
+        "right": 124
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, 9029142910",
+      "box": {
+        "left": 460,
+        "top": 834,
+        "width": 0,
+        "height": 0,
+        "bottom": 834,
+        "right": 460
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, kayvyre",
+      "box": {
+        "left": 796,
+        "top": 834,
+        "width": 0,
+        "height": 0,
+        "bottom": 834,
+        "right": 796
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, mirella47t",
+      "box": {
+        "left": 1132,
+        "top": 834,
+        "width": 0,
+        "height": 0,
+        "bottom": 834,
+        "right": 1132
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, thewanderingsaxophone",
+      "box": {
+        "left": 1468,
+        "top": 834,
+        "width": 0,
+        "height": 0,
+        "bottom": 834,
+        "right": 1468
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, soduh6560",
+      "box": {
+        "left": 460,
+        "top": 1026.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 1026.5,
+        "right": 460
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, wonton.mp3",
+      "box": {
+        "left": 796,
+        "top": 1026.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 1026.5,
+        "right": 796
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "focusTarget__54e4b",
+      "label": "Call tile, _d4rk.ang3l_",
+      "box": {
+        "left": 1132,
+        "top": 1026.5,
+        "width": 0,
+        "height": 0,
+        "bottom": 1026.5,
+        "right": 1132
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "button_a22cb0 sm_a22cb0 overlay-secondary_a22cb0",
+      "label": "Options",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0,
+        "right": 0
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "sv-participant",
+      "label": "𝕮𝖔𝖓𝖆𝖓, camera on, speaking",
+      "box": {
+        "left": 845,
+        "top": 631,
+        "width": 252,
+        "height": 142,
+        "bottom": 773,
+        "right": 1097
+      },
+      "zIndex": "2",
+      "position": "absolute"
+    },
+    {
+      "tag": "div",
+      "cls": "sv-participant",
+      "label": "Kay, camera off, muted",
+      "box": {
+        "left": 1149,
+        "top": 104.1,
+        "width": 53,
+        "height": 74.8,
+        "bottom": 178.9,
+        "right": 1202
+      },
+      "zIndex": "2",
+      "position": "absolute"
+    },
+    {
+      "tag": "div",
+      "cls": "sv-participant",
+      "label": "QzZ, camera off",
+      "box": {
+        "left": 1704,
+        "top": 661.1,
+        "width": 55,
+        "height": 76.8,
+        "bottom": 737.9,
+        "right": 1759
+      },
+      "zIndex": "2",
+      "position": "absolute"
+    },
+    {
+      "tag": "button",
+      "cls": "",
+      "label": null,
+      "box": {
+        "left": 890.2,
+        "top": 956,
+        "width": 61.6,
+        "height": 20,
+        "bottom": 976,
+        "right": 951.8
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "",
+      "label": null,
+      "box": {
+        "left": 990.4,
+        "top": 956,
+        "width": 39.4,
+        "height": 20,
+        "bottom": 976,
+        "right": 1029.8
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "button",
+      "cls": "sv-call-focus-toggle",
+      "label": "Show the rest of Discord",
+      "box": {
+        "left": 12,
+        "top": 12,
+        "width": 32,
+        "height": 32,
+        "bottom": 44,
+        "right": 44
+      },
+      "zIndex": "1100",
+      "position": "absolute"
+    }
+  ],
+  "band": [
+    {
+      "tag": "div",
+      "cls": "videoControls_bfe55a",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "1001",
+      "position": "absolute"
+    },
+    {
+      "tag": "div",
+      "cls": "gradientTop_bfe55a gradientContainer_bfe55a",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 160,
+        "bottom": 160,
+        "right": 1920
+      },
+      "zIndex": "auto",
+      "position": "absolute"
+    },
+    {
+      "tag": "div",
+      "cls": "topControls_bfe55a controlSection_bfe55a",
+      "label": null,
+      "box": {
+        "left": 16,
+        "top": 0,
+        "width": 1888,
+        "height": 49,
+        "bottom": 49,
+        "right": 1904
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "",
+      "label": null,
+      "box": {
+        "left": 16,
+        "top": 0,
+        "width": 1888,
+        "height": 49,
+        "bottom": 49,
+        "right": 1904
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "headerWrapper_cb9592",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 49,
+        "bottom": 49,
+        "right": 1920
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "subtitleContainer__49508",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 49,
+        "bottom": 49,
+        "right": 1920
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "section",
+      "cls": "headerBar__49508 container__9293f transparent__9293f",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 49,
+        "bottom": 49,
+        "right": 1920
+      },
+      "zIndex": "2",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "upperContainer__9293f",
+      "label": null,
+      "box": {
+        "left": 16,
+        "top": 8,
+        "width": 1888,
+        "height": 33,
+        "bottom": 41,
+        "right": 1904
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "children__9293f headerBarChildren__49508",
+      "label": null,
+      "box": {
+        "left": 16,
+        "top": 8,
+        "width": 1864,
+        "height": 33,
+        "bottom": 41,
+        "right": 1880
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "title__49508 titleWrapper__9293f",
+      "label": null,
+      "box": {
+        "left": 16,
+        "top": 8.5,
+        "width": 101.7,
+        "height": 32,
+        "bottom": 40.5,
+        "right": 117.7
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "h1",
+      "cls": "defaultColor__4bd52 text-md/medium_cf4812 defaultColor__5345c title__9",
+      "label": null,
+      "box": {
+        "left": 16,
+        "top": 8.5,
+        "width": 101.7,
+        "height": 32,
+        "bottom": 40.5,
+        "right": 117.7
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "channelIcon__9293f iconWrapper__9293f",
+      "label": "Voice Channel",
+      "box": {
+        "left": 15,
+        "top": 8.5,
+        "width": 20,
+        "height": 32,
+        "bottom": 40.5,
+        "right": 35
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "svg",
+      "cls": "[object SVGAnimatedString]",
+      "label": null,
+      "box": {
+        "left": 15,
+        "top": 14.5,
+        "width": 20,
+        "height": 20,
+        "bottom": 34.5,
+        "right": 35
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "path",
+      "cls": "[object SVGAnimatedString]",
+      "label": null,
+      "box": {
+        "left": 16.7,
+        "top": 16.2,
+        "width": 16.7,
+        "height": 16.7,
+        "bottom": 32.8,
+        "right": 33.3
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "path",
+      "cls": "[object SVGAnimatedString]",
+      "label": null,
+      "box": {
+        "left": 26.7,
+        "top": 20.7,
+        "width": 3.3,
+        "height": 7.6,
+        "bottom": 28.3,
+        "right": 30
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "flex__7c0ba horizontal__7c0ba justifyCenter_abf706 alignCenter_abf706 ",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "div",
+      "cls": "scroller_affa7e videoGrid_a21736 scrollbarGutterStable_d125d2 thin_d12",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "auto",
+      "position": "relative"
+    },
+    {
+      "tag": "div",
+      "cls": "sv-host",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "1",
+      "position": "absolute"
+    },
+    {
+      "tag": "div",
+      "cls": "sv-scene",
+      "label": "Spatial view of Public | #3, 23 people",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "auto",
+      "position": "absolute"
+    },
+    {
+      "tag": "svg",
+      "cls": "[object SVGAnimatedString]",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "1",
+      "position": "absolute"
+    },
+    {
+      "tag": "div",
+      "cls": "sv-background",
+      "label": null,
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080,
+        "bottom": 1080,
+        "right": 1920
+      },
+      "zIndex": "0",
+      "position": "absolute"
+    },
+    {
+      "tag": "button",
+      "cls": "sv-call-focus-toggle",
+      "label": "Show the rest of Discord",
+      "box": {
+        "left": 12,
+        "top": 12,
+        "width": 32,
+        "height": 32,
+        "bottom": 44,
+        "right": 44
+      },
+      "zIndex": "1100",
+      "position": "absolute"
+    },
+    {
+      "tag": "svg",
+      "cls": "[object SVGAnimatedString]",
+      "label": null,
+      "box": {
+        "left": 21,
+        "top": 21,
+        "width": 14,
+        "height": 14,
+        "bottom": 35,
+        "right": 35
+      },
+      "zIndex": "auto",
+      "position": "static"
+    },
+    {
+      "tag": "path",
+      "cls": "[object SVGAnimatedString]",
+      "label": null,
+      "box": {
+        "left": 26.5,
+        "top": 24.2,
+        "width": 3.8,
+        "height": 7.6,
+        "bottom": 31.8,
+        "right": 30.3
+      },
+      "zIndex": "auto",
+      "position": "static"
+    }
+  ],
+  "samples": [
+    {
+      "slot": "top-left",
+      "at": [
+        28,
+        28
+      ],
+      "hit": "sv-call-focus-toggle",
+      "chain": [
+        "sv-call-focus-toggle",
+        "root_bfe55a",
+        "callContainer_cb9592 fullScreen_cb9592 theme-dark ",
+        "wrapper_cb9592 fullScreen_cb9592 video_cb9592"
+      ]
+    },
+    {
+      "slot": "top-left below band",
+      "at": [
+        28,
+        88
+      ],
+      "hit": "scroller_affa7e videoGrid_a21736 scrollbarGutterSt",
+      "chain": [
+        "scroller_affa7e videoGrid_a21736 scrollbarGutterSt",
+        "flex__7c0ba horizontal__7c0ba justifyCenter_abf706",
+        "",
+        "root_bfe55a"
+      ]
+    },
+    {
+      "slot": "top-right",
+      "at": [
+        1892,
+        28
+      ],
+      "hit": "[object SVGAnimatedString]",
+      "chain": [
+        "[object SVGAnimatedString]",
+        "[object SVGAnimatedString]",
+        "[object SVGAnimatedString]",
+        "[object SVGAnimatedString]"
+      ]
+    },
+    {
+      "slot": "bottom-left",
+      "at": [
+        28,
+        1052
+      ],
+      "hit": "[object SVGAnimatedString]",
+      "chain": [
+        "[object SVGAnimatedString]",
+        "contents__201d5 lineHeightReset_f1ceac",
+        "leftTrayIcon_cb9592 button__201d5 lookBlank__201d5",
+        ""
+      ]
+    },
+    {
+      "slot": "bottom-right",
+      "at": [
+        1892,
+        1052
+      ],
+      "hit": "[object SVGAnimatedString]",
+      "chain": [
+        "[object SVGAnimatedString]",
+        "contents__201d5 lineHeightReset_f1ceac",
+        "rightTrayIcon_cb9592 button__201d5 lookBlank__201d",
+        ""
+      ]
+    }
+  ]
+}

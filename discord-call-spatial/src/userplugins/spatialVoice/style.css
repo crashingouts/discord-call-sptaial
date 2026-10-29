@@ -1,0 +1,1875 @@
+/*
+ * Spatial Voice, visual layer for the Vencord userplugin.
+ *
+ * This file is loaded by index.tsx as `./style.css?managed`, which the
+ * Vencord managedStyle lifecycle registers under the plugin's name and injects only
+ * while the plugin is enabled.
+ *
+ * Scope: every selector starts at .sv-scene, the plugin's root, except the
+ * corner toggle, which is anchored on its own .sv-call-focus-toggle class
+ * because Discord's chrome can host it. Nothing here touches Discord's own
+ * classes, the Depth3D plugin, or the sidebar, app grid, body or root layout.
+ *
+ * Containment: the scene is a paint container (contain: paint) with its own
+ * clip, so no layer here can paint over Discord's interface, and a scene with
+ * no participant in it paints nothing at all (section 2) rather than turning
+ * the window into the backdrop while no call is on screen.
+ *
+ * DOM contract this file styles (set by scene.tsx / layout.ts):
+ *   .sv-scene[data-sv-theme="dark-space|aurora|sunset|forest|ocean|cyberpunk|minimal|dark-red|purple-galaxy"]
+ *            [data-sv-scheme="dark|light"]
+ *     .sv-background                     decorative only, pointer-events none
+ *     .sv-connectors > .sv-connector     decorative only, pointer-events none
+ *     .sv-participant[data-sv-selected="true"][data-sv-speaking="true"][data-sv-emphasized="true"]
+ *       .sv-video > video|img            camera on
+ *       .sv-avatar > .sv-avatar-image    camera off
+ *       .sv-label
+ *       .sv-status > .sv-status-icon     optional status row (mute, camera)
+ *     .sv-controls                       real Discord buttons, restyled only
+ *     .sv-call-focus-toggle[data-sv-focused="true|false"]
+ *                                        the corner control (section 15); it may
+ *                                        sit in Discord's own chrome, outside
+ *                                        this scene, so it is class-scoped only
+ *
+ * Two flags, two jobs: data-sv-speaking is the raw live roster and drives every
+ * light (avatar ring, halo, panel rim), so the glow leaves the instant somebody
+ * stops talking. data-sv-emphasized is the held flag and drives size only.
+ *
+ * Inputs this file consumes, set inline on .sv-scene from Vencord settings by
+ * `buildSpatialSceneVariables` in themes.ts:
+ *   --sv-bg-intensity      0 to 1, strength of atmosphere and particles
+ *   --sv-particle-opacity  0 to 1, 0 removes the particle layer
+ *   --sv-anim              running or paused, pauses the background animations
+ *   --sv-motion-duration   a time, drives transitions and emphasis timing
+ *   --sv-avatar-scale      unitless, speaking avatar enlargement (default 1.4)
+ *   --sv-avatar-size       a length, camera-off avatar diameter
+ *   --sv-speaking-glow     unitless 0 to 1, ring and halo strength
+ *   --sv-connector-opacity, --sv-connector-width, --sv-connector-glow,
+ *   --sv-connector-highlight   connector line appearance
+ *
+ * Positioning contract: a .sv-participant is centred on the point given by its
+ * inline left/top (or --sv-x/--sv-y). The wrapper itself never scales, so the
+ * connector anchors stay stable; only .sv-avatar-image scales when a camera-off
+ * participant speaks.
+ */
+
+/* ==========================================================================
+   1. Tokens, default theme is Dark Space
+   ========================================================================== */
+
+.sv-scene {
+    /* settings inputs, overridable inline by React */
+    --sv-bg-intensity: 1;
+    --sv-motion-duration: 220ms;
+    --sv-avatar-scale: 1.4;
+    --sv-speaking-glow: 0.75;
+    --sv-connector-opacity: 0.55;
+    --sv-connector-width: 1.25px;
+    --sv-connector-glow: 1;
+    --sv-connector-highlight: 1;
+    /* the settings value lands in --sv-avatar-size (inline, from themes.ts);
+       the breakpoint default is only a fallback, so a size the user set is
+       never overridden by a media or container query. */
+    --sv-avatar-size-default: 58px;
+    --sv-fx-scale: 1;
+    --sv-line-mult: 1;
+    /* running or paused, set to paused by the reduced-motion setting */
+    --sv-anim: running;
+
+    /* palette */
+    --sv-bg-base: #04070f;
+    --sv-ink: #eef4ff;
+    --sv-ink-dim: #a9bbd8;
+    --sv-ink-bright: #ffffff;
+    --sv-accent: #5ad1ff;
+    --sv-accent-glow: rgba(90, 209, 255, 0.42);
+    --sv-accent-alt: #a78bfa;
+    --sv-line-color: #8fd0ff;
+    --sv-line-highlight: #d6f0ff;
+    --sv-line-glow: rgba(143, 208, 255, 0.55);
+    --sv-panel: rgba(8, 14, 30, 0.66);
+    --sv-panel-border: rgba(140, 190, 255, 0.22);
+    --sv-panel-radius: 14px;
+    --sv-panel-shadow: 0 18px 44px -22px rgba(0, 0, 0, 0.85);
+    --sv-chip: rgba(4, 9, 20, 0.78);
+    --sv-chip-border: rgba(140, 190, 255, 0.2);
+    --sv-label-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    /* the LIVE tag on a secondary camera tile, and the two backdrop layers the
+       reference compositions are built on: faint orbit arcs and the vortex */
+    --sv-live: #e5484d;
+    --sv-orbit-ink: rgba(120, 170, 235, 0.16);
+    --sv-vortex-ink: rgba(120, 180, 255, 0.1);
+    --sv-vortex-core: rgba(190, 230, 255, 0.14);
+    /* distance from the scene's bottom edge to the connector origin */
+    --sv-origin-bottom: 56px;
+    --sv-focus: #7dd3fc;
+    --sv-control-bg: rgba(8, 14, 28, 0.74);
+    --sv-control-border: rgba(140, 190, 255, 0.2);
+    --sv-control-hover: rgba(90, 209, 255, 0.2);
+    /* deep enough that white text and icons clear 4.5:1 on the leave button */
+    --sv-danger: #c0272d;
+    --sv-danger-ink: #ffffff;
+    --sv-speaking-ring: rgba(122, 220, 255, 0.9);
+    --sv-speaking-glow-color: rgba(90, 209, 255, 0.55);
+    --sv-vignette: rgba(1, 3, 9, 0.72);
+}
+
+/* ==========================================================================
+   2. Scene root
+   ========================================================================== */
+
+.sv-scene {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    /* deliberate clip: participant points may sit near or past the edge, and the
+       scene must never paint over Discord's own chrome. Menus that need to escape
+       (context menus, device pickers) are portalled by Discord outside this node. */
+    overflow: hidden;
+    isolation: isolate;
+    /* structural containment: the scene is a paint container, so nothing it
+       draws (a blurred haze layer, a participant pushed past the edge, a stray
+       fixed overlay) can ever reach Discord's own chrome, whatever box the host
+       gives the scene. */
+    contain: paint;
+    background-color: var(--sv-bg-base);
+    color: var(--sv-ink);
+    color-scheme: dark;
+    font-size: 14px;
+    line-height: 1.25;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color var(--sv-motion-duration) ease, color var(--sv-motion-duration) ease;
+}
+
+/* A scene with no participant in it is not a call, so it paints nothing. This is
+   the rule that keeps a mounted-but-empty scene, or one left behind after the
+   call view closes, from turning the whole window into the spatial backdrop: its
+   opaque base, its orbit arcs and vortex and its connector bloom all go, and
+   Discord's own interface shows through. Only the plugin's own decorative layers
+   are hidden. .sv-controls is Discord's bar and this file never hides it, so an
+   empty scene can never take the call controls away with it. */
+.sv-scene:not(:has(.sv-participant)) {
+    background-color: transparent;
+}
+
+.sv-scene:not(:has(.sv-participant)) .sv-background,
+.sv-scene:not(:has(.sv-participant))::before,
+.sv-scene:not(:has(.sv-participant))::after {
+    display: none;
+}
+
+.sv-scene *,
+.sv-scene *::before,
+.sv-scene *::after {
+    box-sizing: border-box;
+}
+
+/* Minimal is a real light theme: native scrollbars, carets and form controls
+   inside the scene must render dark-on-light, not light-on-light. The attribute
+   is set by themes.ts; the theme selector covers a scene rendered without it. */
+.sv-scene[data-sv-scheme="light"],
+.sv-scene[data-sv-theme="minimal"] {
+    color-scheme: light;
+}
+
+.sv-scene ::selection {
+    background-color: var(--sv-accent-glow);
+    color: var(--sv-ink-bright);
+}
+
+/* ==========================================================================
+   3. Decorative background layers
+   ========================================================================== */
+
+.sv-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background-color: var(--sv-bg-base);
+    /* Orbit arcs over the theme's own layers: three faint rings around the
+       scene's centre, which is what gives both references their depth without a
+       single particle of texture. A texture-free theme keeps them, which is why
+       they are drawn rather than photographed. */
+    background-image:
+        radial-gradient(closest-side at 50% 46%,
+            transparent 57.6%, var(--sv-orbit-ink) 58%, transparent 58.7%,
+            transparent 70.4%, var(--sv-orbit-ink) 70.8%, transparent 71.6%,
+            transparent 83.4%, var(--sv-orbit-ink) 83.8%, transparent 84.8%),
+        var(--sv-bg-layers, linear-gradient(180deg, #060c1b 0%, #04070f 56%, #01030a 100%));
+    background-repeat: no-repeat, no-repeat;
+    background-position: center, center;
+    background-size: 168% 168%, cover;
+    transition: background-color var(--sv-motion-duration) ease;
+}
+
+/* corner darkening: the reference frames the scene with a deeper vignette than
+   the palette gradients alone produce, which is what keeps the eye on the middle.
+   It is an inset shadow on the backdrop itself, so it never covers a participant
+   and never takes a click. */
+.sv-background {
+    box-shadow: inset 0 0 130px 34px var(--sv-vignette);
+}
+
+.sv-background::before,
+.sv-background::after {
+    content: "";
+    position: absolute;
+    inset: -14%;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+
+/* soft haze, nebula and focal bloom */
+.sv-background::before {
+    background-image: var(--sv-haze, radial-gradient(50% 40% at 50% 96%, rgba(34, 211, 238, 0.36), transparent 72%));
+    filter: blur(var(--sv-haze-blur, 18px));
+    opacity: calc(var(--sv-bg-intensity) * 0.95);
+    animation: sv-haze-drift var(--sv-haze-duration, 34s) ease-in-out infinite alternate;
+    animation-play-state: var(--sv-anim, running);
+}
+
+/* stars, dust, bubbles, foliage, scanlines */
+.sv-background::after {
+    background-image: var(--sv-particles, radial-gradient(1.2px 1.2px at 30% 30%, rgba(255, 255, 255, 0.7), transparent 60%));
+    background-repeat: repeat;
+    background-size: var(--sv-particle-size, 480px 480px);
+    opacity: calc(var(--sv-bg-intensity) * var(--sv-particle-opacity, 0.85) * var(--sv-fx-scale));
+    -webkit-mask-image: radial-gradient(120% 110% at 50% 45%, #000 42%, transparent 100%);
+    mask-image: radial-gradient(120% 110% at 50% 45%, #000 42%, transparent 100%);
+    animation: sv-particle-drift var(--sv-particle-duration, 70s) linear infinite;
+    animation-play-state: var(--sv-anim, running);
+}
+
+/* The vortex: a slow spiral of light at the middle of the scene, masked to a
+   disc so it never reaches the participants. The reference compositions put
+   this at the same point the lattice leaves hollow. */
+.sv-scene::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    z-index: 0;
+    width: min(64%, 560px);
+    aspect-ratio: 1;
+    margin-left: calc(min(64%, 560px) / -2);
+    margin-top: calc(min(64%, 560px) / -2);
+    background-image:
+        repeating-conic-gradient(from 0deg at 50% 50%,
+            var(--sv-vortex-ink) 0deg 2.5deg,
+            transparent 2.5deg 26deg),
+        radial-gradient(closest-side, var(--sv-vortex-core), transparent 62%);
+    /* a band, not a fan: the swirl reads only in the middle third of the disc */
+    -webkit-mask-image: radial-gradient(closest-side, transparent 26%, #000 56%, #000 74%, transparent 96%);
+    mask-image: radial-gradient(closest-side, transparent 26%, #000 56%, #000 74%, transparent 96%);
+    opacity: calc(0.18 + 0.42 * var(--sv-bg-intensity));
+    filter: blur(2px);
+    pointer-events: none;
+    animation: sv-vortex-turn 140s linear infinite;
+    animation-play-state: var(--sv-anim, running);
+}
+
+@keyframes sv-vortex-turn {
+    from {
+        rotate: 0deg;
+    }
+
+    to {
+        rotate: 360deg;
+    }
+}
+
+@keyframes sv-haze-drift {
+    from {
+        transform: translate3d(-1.5%, 1%, 0) scale(1.02);
+    }
+
+    to {
+        transform: translate3d(1.8%, -1.6%, 0) scale(1.09);
+    }
+}
+
+@keyframes sv-particle-drift {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: translate3d(-6%, -4%, 0);
+    }
+}
+
+@keyframes sv-aurora-flow {
+    from {
+        transform: translate3d(-3%, 0, 0) scale(1.06);
+    }
+
+    50% {
+        transform: translate3d(2%, -2%, 0) scale(1.12);
+    }
+
+    to {
+        transform: translate3d(3%, 1%, 0) scale(1.04);
+    }
+}
+
+@keyframes sv-ocean-sway {
+    from {
+        transform: translate3d(-2%, -1%, 0) rotate(-1.2deg) scale(1.08);
+    }
+
+    to {
+        transform: translate3d(2%, 1.5%, 0) rotate(1.2deg) scale(1.14);
+    }
+}
+
+@keyframes sv-neon-flicker {
+
+    0%,
+    100% {
+        opacity: calc(var(--sv-bg-intensity) * 0.95);
+    }
+
+    47% {
+        opacity: calc(var(--sv-bg-intensity) * 0.82);
+    }
+
+    52% {
+        opacity: calc(var(--sv-bg-intensity) * 1);
+    }
+}
+
+@keyframes sv-slow-pulse {
+    from {
+        opacity: calc(var(--sv-bg-intensity) * 0.72);
+        transform: scale(1);
+    }
+
+    to {
+        opacity: calc(var(--sv-bg-intensity) * 1);
+        transform: scale(1.04);
+    }
+}
+
+/* ==========================================================================
+   4. Connector overlay
+   ========================================================================== */
+
+.sv-connectors {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.sv-connectors svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+/* The lines are brightest where they leave the call controls and fade as they
+   travel, which is how the reference keeps a dozen of them from cutting the
+   scene in half. The mask is centred on the connector origin. */
+.sv-connectors {
+    -webkit-mask-image: radial-gradient(130% 96% at 50% 92%, #000 18%, rgba(0, 0, 0, 0.55) 62%, transparent 100%);
+    mask-image: radial-gradient(130% 96% at 50% 92%, #000 18%, rgba(0, 0, 0, 0.55) 62%, transparent 100%);
+}
+
+/* The bloom the lines converge into: a small hot core just above the control
+   bar with a wide, soft halo. It sits above the backdrop and below the
+   participants, and it is what makes the connector origin read as a light
+   source rather than as a point where lines happen to meet. */
+.sv-scene::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: var(--sv-origin-bottom, 56px);
+    z-index: 1;
+    width: 220px;
+    height: 110px;
+    margin-left: -110px;
+    margin-bottom: -55px;
+    background-image:
+        radial-gradient(closest-side, rgba(255, 255, 255, 0.9), transparent 26%),
+        radial-gradient(closest-side, var(--sv-accent-glow), transparent 96%);
+    opacity: calc(0.3 + 0.4 * var(--sv-bg-intensity));
+    filter: blur(3px);
+    pointer-events: none;
+    animation: sv-origin-breathe 7s ease-in-out infinite alternate;
+    animation-play-state: var(--sv-anim, running);
+}
+
+@keyframes sv-origin-breathe {
+    from {
+        opacity: calc(0.42 + 0.4 * var(--sv-bg-intensity));
+        scale: 1;
+    }
+
+    to {
+        opacity: calc(0.62 + 0.38 * var(--sv-bg-intensity));
+        scale: 1.08;
+    }
+}
+
+line.sv-connector,
+path.sv-connector,
+polyline.sv-connector,
+.sv-connector[stroke] {
+    fill: none;
+    stroke: var(--sv-line-color);
+    stroke-width: var(--sv-connector-width);
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+    opacity: calc(var(--sv-connector-opacity) * var(--sv-line-mult));
+    filter: drop-shadow(0 0 calc(4px * var(--sv-connector-glow)) var(--sv-line-glow));
+    transition: opacity var(--sv-motion-duration) ease, stroke var(--sv-motion-duration) ease, filter var(--sv-motion-duration) ease;
+    pointer-events: none;
+}
+
+/* div or span connectors, positioned and rotated by connectors.ts */
+div.sv-connector,
+span.sv-connector {
+    position: absolute;
+    height: var(--sv-connector-width);
+    min-height: 1px;
+    transform-origin: 0 50%;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, var(--sv-line-color), transparent);
+    opacity: calc(var(--sv-connector-opacity) * var(--sv-line-mult) * 0.9);
+    filter: drop-shadow(0 0 calc(3px * var(--sv-connector-glow)) var(--sv-line-glow));
+    transition: opacity var(--sv-motion-duration) ease, background-image var(--sv-motion-duration) ease;
+    pointer-events: none;
+}
+
+.sv-connector[data-sv-emphasized="true"],
+.sv-connector[data-sv-speaking="true"] {
+    stroke: var(--sv-line-highlight);
+    background-image: linear-gradient(90deg, var(--sv-line-highlight), transparent);
+    opacity: calc((var(--sv-connector-opacity) + 0.35 * var(--sv-connector-highlight)) * min(var(--sv-line-mult), 1.25));
+    filter: drop-shadow(0 0 calc(7px * var(--sv-connector-glow)) var(--sv-line-highlight));
+}
+
+/* ==========================================================================
+   5. Participants
+   ========================================================================== */
+
+.sv-participant {
+    position: absolute;
+    left: var(--sv-x, 0%);
+    top: var(--sv-y, 0%);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    color: var(--sv-ink);
+    transform: translate(-50%, -50%);
+    transform-origin: 50% 50%;
+    transition: opacity var(--sv-motion-duration) ease, filter var(--sv-motion-duration) ease;
+}
+
+.sv-participant[role="button"],
+.sv-participant button {
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   6. Camera panels, always straight and never scaled
+   ========================================================================== */
+
+.sv-video {
+    position: relative;
+    display: block;
+    border-radius: var(--sv-panel-radius);
+    background-color: var(--sv-panel);
+    border: 1px solid var(--sv-panel-border);
+    box-shadow: var(--sv-panel-shadow);
+    transform: none;
+    isolation: isolate;
+    transition: border-color var(--sv-motion-duration) ease,
+        box-shadow var(--sv-motion-duration) ease;
+}
+
+/* The reference puts a soft vignette inside every panel, so a feed sits in the
+   scene instead of floating on it. Decorative only: it never takes a click and
+   never covers the name, which paints above it. */
+.sv-video::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow:
+        inset 0 -34px 34px -26px rgba(0, 0, 0, 0.78),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    pointer-events: none;
+}
+
+/* A secondary tile carries a small red LIVE tag, which is what the reference
+   shows on every camera tile that is not the focused one. Decorative: the
+   participant itself is announced by its own aria-label. */
+.sv-participant:not([data-sv-selected="true"]) .sv-video::after {
+    content: "LIVE";
+    position: absolute;
+    z-index: 3;
+    top: 7px;
+    right: 7px;
+    padding: 2px 5px 1px;
+    border-radius: 5px;
+    background-color: var(--sv-live);
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    line-height: 1.5;
+    text-shadow: none;
+    pointer-events: none;
+}
+
+.sv-video video,
+.sv-video img,
+.sv-video canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+    object-position: center;
+    border-radius: inherit;
+    background: transparent;
+    transform: none;
+}
+
+/* A secondary panel keeps a thin accent-lit border, the way every tile in the
+   reference carries its own colour of edge. It is one theme hue for everyone
+   (a per-participant hue needs the id in the DOM, which is a scene change), but
+   at this width it reads as the same lit edge. */
+.sv-participant:not([data-sv-selected="true"]) .sv-video {
+    border-color: var(--sv-accent-glow);
+    box-shadow:
+        var(--sv-panel-shadow),
+        0 0 0 1px var(--sv-chip-border),
+        0 0 18px -10px var(--sv-accent);
+}
+
+.sv-participant:hover .sv-video {
+    border-color: var(--sv-accent-glow);
+    box-shadow: var(--sv-panel-shadow), 0 0 0 1px var(--sv-accent-glow);
+}
+
+.sv-participant[data-sv-selected="true"] {
+    z-index: 4;
+}
+
+/* The focused panel keeps its straight geometry and gets the reference's lit
+   rim instead: a thin accent-to-alt gradient line with an outer glow. The rim is
+   a gradient border drawn by a masked pseudo-element, so the video inside stays
+   untouched and unslanted. */
+.sv-participant[data-sv-selected="true"] .sv-video,
+.sv-video[data-sv-selected="true"] {
+    border-color: transparent;
+    box-shadow:
+        0 0 0 1px var(--sv-accent),
+        0 0 26px -2px var(--sv-accent-glow),
+        0 0 74px -10px var(--sv-accent-alt),
+        0 0 130px -30px var(--sv-accent),
+        0 26px 64px -28px rgba(0, 0, 0, 0.92);
+}
+
+.sv-participant[data-sv-selected="true"] .sv-video::before,
+.sv-video[data-sv-selected="true"]::before {
+    inset: -1px;
+    padding: 1.5px;
+    background-image: linear-gradient(148deg, var(--sv-accent) 0%, var(--sv-accent-alt) 52%, var(--sv-accent) 100%);
+    -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+    -webkit-mask-clip: content-box, border-box;
+    -webkit-mask-composite: xor;
+    mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+    mask-clip: content-box, border-box;
+    mask-composite: exclude;
+    box-shadow: none;
+}
+
+/* The selected panel's own LIVE tag is discord's element, not a pseudo-element:
+   it stays a dark chip so the bright rim is the loudest thing in the panel. */
+.sv-participant[data-sv-selected="true"] .sv-badge {
+    background-color: rgba(3, 10, 22, 0.82);
+}
+
+.sv-participant[data-sv-speaking="true"] .sv-video {
+    border-color: var(--sv-speaking-ring);
+    box-shadow:
+        0 0 0 1px var(--sv-speaking-ring),
+        0 0 calc(10px + 24px * var(--sv-speaking-glow)) -6px var(--sv-speaking-glow-color),
+        var(--sv-panel-shadow);
+}
+
+/* A camera-on participant who happens to be speaking keeps their tile exactly
+   as it is. The speaking enlargement is a camera-off feature, and a video panel
+   stays a straight, level rectangle in every state: never scaled, rotated or
+   skewed, so its own aspect ratio is the only thing that shapes it. */
+.sv-participant[data-sv-speaking="true"] .sv-video,
+.sv-participant[data-sv-speaking="true"] .sv-video video,
+.sv-participant[data-sv-speaking="true"] .sv-video img,
+.sv-participant[data-sv-speaking="true"] .sv-video canvas,
+.sv-participant[data-sv-camera="on"] .sv-video,
+.sv-participant[data-sv-camera="on"] .sv-video video,
+.sv-participant[data-sv-camera="on"] .sv-video img {
+    transform: none;
+}
+
+/* ==========================================================================
+   7. Avatars, the only element that scales, and only for camera off
+   ========================================================================== */
+
+.sv-avatar {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: var(--sv-avatar-size, var(--sv-avatar-size-default, 58px));
+    height: var(--sv-avatar-size, var(--sv-avatar-size-default, 58px));
+    border-radius: 50%;
+    overflow: visible;
+    isolation: isolate;
+}
+
+/* The ring both references show is not a full outline: it is an arc that burns
+   brightest on one side and falls away into nothing, with a faint bloom around
+   it. A conic gradient masked to a ring draws exactly that, and it needs no
+   element of its own. */
+.sv-avatar::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    z-index: 2;
+    border-radius: 50%;
+    background-image: conic-gradient(
+        from 208deg,
+        transparent 0deg,
+        var(--sv-accent) 44deg,
+        var(--sv-accent-alt) 120deg,
+        var(--sv-speaking-ring) 172deg,
+        transparent 236deg,
+        transparent 360deg
+    );
+    -webkit-mask-image: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px), #000 100%);
+    mask-image: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px), #000 100%);
+    opacity: calc(0.7 + 0.3 * var(--sv-speaking-glow));
+    filter: drop-shadow(0 0 calc(5px + 9px * var(--sv-speaking-glow)) var(--sv-accent-glow));
+    pointer-events: none;
+    transition: opacity var(--sv-motion-duration) ease, filter var(--sv-motion-duration) ease;
+}
+
+.sv-avatar-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    background-color: var(--sv-chip);
+    box-shadow: 0 0 0 1px var(--sv-chip-border), 0 10px 24px -14px rgba(0, 0, 0, 0.9);
+    transform: scale(1);
+    transform-origin: 50% 50%;
+    transition: transform calc(var(--sv-motion-duration) * 1.6) cubic-bezier(0.22, 0.8, 0.24, 1),
+        box-shadow var(--sv-motion-duration) ease;
+}
+
+.sv-avatar::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1);
+    transition: opacity var(--sv-motion-duration) ease, transform var(--sv-motion-duration) ease,
+        border-color var(--sv-motion-duration) ease;
+}
+
+.sv-participant:hover .sv-avatar-image {
+    box-shadow: 0 0 0 1px var(--sv-accent), 0 10px 24px -14px rgba(0, 0, 0, 0.9);
+}
+
+.sv-participant:hover .sv-avatar::before {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px var(--sv-accent-glow));
+}
+
+/* The enlargement is the hold: it starts with the first word and lasts for the
+   hold setting, so a short reply still reads across the room after it ends. */
+.sv-participant[data-sv-speaking="true"] .sv-avatar-image,
+.sv-participant[data-sv-emphasized="true"] .sv-avatar-image {
+    transform: scale(var(--sv-avatar-scale));
+}
+
+/* The light is not the hold. The ring and the halo are drawn from
+   data-sv-speaking alone, the raw roster flag, so they go out the moment
+   somebody stops talking instead of lingering for the hold setting. A held
+   participant therefore keeps its size and loses its glow. */
+.sv-participant[data-sv-speaking="true"] .sv-avatar-image {
+    box-shadow:
+        0 0 0 calc(1px + 3px * var(--sv-speaking-glow)) var(--sv-speaking-ring),
+        0 0 calc(14px + 34px * var(--sv-speaking-glow)) calc(2px + 6px * var(--sv-speaking-glow)) var(--sv-speaking-glow-color);
+}
+
+/* While somebody is speaking the arc turns, slowly, so the ring reads as
+   attention rather than as decoration. The animation is paused by the
+   reduced-motion setting and removed by the system preference. */
+.sv-participant[data-sv-speaking="true"] .sv-avatar::before {
+    opacity: 1;
+    filter: drop-shadow(0 0 calc(6px + 12px * var(--sv-speaking-glow)) var(--sv-speaking-ring));
+    animation: sv-ring-turn 6s linear infinite;
+    animation-play-state: var(--sv-anim, running);
+}
+
+.sv-participant[data-sv-speaking="true"] .sv-avatar::after {
+    opacity: calc(var(--sv-speaking-glow) * 0.85);
+    border-color: var(--sv-speaking-ring);
+    transform: scale(var(--sv-avatar-scale));
+    box-shadow: 0 0 18px var(--sv-speaking-glow-color);
+}
+
+@keyframes sv-ring-turn {
+    from {
+        rotate: 0deg;
+    }
+
+    to {
+        rotate: 360deg;
+    }
+}
+
+/* The enlargement is camera-off only. If the scene flags a participant as
+   camera-on, nothing about their avatar scales, whatever emphasis flags arrive
+   in the same render, and a stale emphasis cannot follow them onto video. */
+.sv-participant[data-sv-camera="on"] .sv-avatar-image,
+.sv-participant[data-sv-camera="on"] .sv-avatar::after {
+    transform: none;
+    box-shadow: 0 0 0 1px var(--sv-chip-border), 0 10px 24px -14px rgba(0, 0, 0, 0.9);
+}
+
+/* ==========================================================================
+   8. Labels
+
+   Two treatments, exactly as the references use them:
+   - a camera panel carries its name inside the panel, bottom left, over the
+     vignette, with no chip behind it;
+   - a camera-off avatar carries its name under the circle, small and quiet.
+   Both stay one line, ellipsised, and neither ever takes a click.
+   ========================================================================== */
+
+.sv-label {
+    position: relative;
+    z-index: 3;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--sv-ink);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    pointer-events: none;
+    transition: color var(--sv-motion-duration) ease;
+}
+
+/* inside the panel: anchored to the panel's bottom-left corner. The panel is the
+   wrapper's only in-flow child once this is absolute, so the wrapper keeps
+   exactly the panel's box and the centring contract in layout.ts still holds. */
+.sv-video + .sv-label {
+    position: absolute;
+    left: 10px;
+    bottom: 8px;
+    max-width: calc(100% - 20px);
+    padding: 0 2px;
+    text-align: left;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* under the circle: centred, a little dimmer, still legible on the backdrop */
+.sv-avatar + .sv-label {
+    padding: 0 4px;
+    color: var(--sv-ink-dim);
+    font-weight: 600;
+    font-size: 11px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.sv-participant[data-sv-speaking="true"] .sv-label,
+.sv-participant[data-sv-emphasized="true"] .sv-label {
+    color: var(--sv-ink-bright);
+}
+
+.sv-participant[data-sv-selected="true"] .sv-label {
+    color: var(--sv-ink-bright);
+}
+
+/* ---- Optional status row ------------------------------------------------
+   The scene may render a short status line under a name plate: mute, deafen,
+   camera off, or a connection hint. The same state is announced on the
+   participant's own accessible name, so this row is decorative and never
+   interactive. If the scene renders no .sv-status, none of this applies. */
+
+.sv-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 0 2px;
+    color: var(--sv-ink-dim);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    text-shadow: var(--sv-label-shadow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+.sv-status-icon {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+    color: inherit;
+    opacity: 0.9;
+}
+
+/* muted and deafened keep Discord's red convention, in every theme's red */
+.sv-participant[data-sv-muted="true"] .sv-status,
+.sv-participant[data-sv-deafened="true"] .sv-status {
+    color: var(--sv-danger-ink);
+    background-color: var(--sv-danger);
+    border-radius: 999px;
+    padding: 0 6px;
+}
+
+/* ==========================================================================
+   9. Optional status chips the scene may render inside a panel
+   ========================================================================== */
+
+.sv-badge {
+    position: absolute;
+    z-index: 3;
+    top: 8px;
+    right: 8px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--sv-chip-border);
+    background-color: var(--sv-chip);
+    color: var(--sv-ink);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    text-shadow: var(--sv-label-shadow);
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   10. Floating control bar, real Discord buttons inside
+   ========================================================================== */
+
+.sv-controls {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    max-width: calc(100% - 24px);
+    padding: 9px 14px;
+    border-radius: var(--sv-control-radius, 26px);
+    border: 1px solid var(--sv-control-border);
+    background-color: var(--sv-control-bg);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow:
+        0 26px 60px -26px rgba(0, 0, 0, 0.95),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    color: var(--sv-ink);
+    transform: translateX(-50%);
+    transition: background-color var(--sv-motion-duration) ease, border-color var(--sv-motion-duration) ease;
+}
+
+/* the bar's own top rim light, so it reads as a floating slab rather than a
+   filled rectangle */
+.sv-controls::before {
+    content: "";
+    position: absolute;
+    inset: 0 12px auto;
+    height: 1px;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, transparent, var(--sv-accent-glow), transparent);
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.sv-controls button,
+.sv-controls [role="button"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: background-color var(--sv-motion-duration) ease, box-shadow var(--sv-motion-duration) ease;
+}
+
+.sv-controls button:hover:not(:disabled):not([aria-disabled="true"]),
+.sv-controls [role="button"]:hover {
+    background-color: var(--sv-control-hover);
+}
+
+.sv-controls button:active:not(:disabled),
+.sv-controls [role="button"]:active {
+    box-shadow: 0 0 0 1px var(--sv-accent-glow) inset;
+}
+
+/* native danger styling stays, only its colour is brought into the theme.
+   Discord names that button by class (colorRed, Danger) or, reliably, by its
+   aria-label, so both are matched. */
+.sv-controls button[class*="Danger"],
+.sv-controls button[class*="Red"],
+.sv-controls [class*="Danger"] button,
+.sv-controls button[aria-label*="disconnect" i],
+.sv-controls button[aria-label*="leave" i],
+.sv-controls [role="button"][aria-label*="disconnect" i] {
+    background-color: var(--sv-danger);
+    color: var(--sv-danger-ink);
+}
+
+.sv-controls button[class*="Danger"]:hover:not(:disabled):not([aria-disabled="true"]),
+.sv-controls button[class*="Red"]:hover:not(:disabled):not([aria-disabled="true"]),
+.sv-controls button[aria-label*="disconnect" i]:hover:not(:disabled):not([aria-disabled="true"]),
+.sv-controls button[aria-label*="leave" i]:hover:not(:disabled):not([aria-disabled="true"]) {
+    background-color: var(--sv-danger);
+    box-shadow: 0 0 0 2px var(--sv-danger) inset, 0 0 18px -4px var(--sv-danger);
+}
+
+/* disabled and muted states stay visible and unclickable, never hidden */
+/* dimmed, never hidden, and the danger surface is left alone so a disabled
+   leave button still reads as the leave button */
+.sv-controls button:disabled,
+.sv-controls button[aria-disabled="true"],
+.sv-controls [role="button"][aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* ==========================================================================
+   11. Focus, keyboard and pointer hygiene
+   ========================================================================== */
+
+.sv-scene :focus-visible {
+    outline: 2px solid var(--sv-focus);
+    outline-offset: 2px;
+    border-radius: 999px;
+}
+
+.sv-participant:focus-visible {
+    outline: 2px solid var(--sv-focus);
+    outline-offset: 6px;
+    border-radius: var(--sv-panel-radius);
+}
+
+.sv-participant:focus-within {
+    z-index: 4;
+}
+
+.sv-background,
+.sv-connectors,
+.sv-connector,
+.sv-label,
+.sv-badge {
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.sv-video video::-webkit-media-controls {
+    display: none;
+}
+
+/* ==========================================================================
+   12. Responsive
+   The scene's own width is what matters: with the member list and chat panel
+   open, Discord's call area is far narrower than the window, so a viewport
+   media query can keep desktop sizes on a 500px-wide scene. The scene is
+   therefore a size container, and the breakpoints are written twice: once as
+   @container rules against its own width (the accurate case), once as viewport
+   @media fallbacks for an engine without container queries. Both only ever set
+   fallbacks (--sv-avatar-size-default, --sv-fx-scale, label sizes), never a
+   value the user chose: an explicit avatar size arrives as --sv-avatar-size and
+   still wins.
+   ========================================================================== */
+
+.sv-scene {
+    container-type: inline-size;
+    container-name: sv-scene;
+}
+
+@container sv-scene (max-width: 1200px) {
+    .sv-participant {
+        --sv-avatar-size-default: 50px;
+        --sv-panel-radius: 12px;
+    }
+
+    .sv-label {
+        font-size: 11px;
+        padding: 2px 8px;
+    }
+}
+
+@container sv-scene (max-width: 900px) {
+    .sv-participant {
+        --sv-avatar-size-default: 44px;
+    }
+
+    .sv-background {
+        --sv-fx-scale: 0.8;
+    }
+
+    .sv-controls {
+        gap: 4px;
+        padding: 6px 10px;
+        bottom: 12px;
+    }
+
+    .sv-controls button,
+    .sv-controls [role="button"] {
+        min-width: 30px;
+        min-height: 30px;
+    }
+}
+
+@container sv-scene (max-width: 640px) {
+    .sv-participant {
+        --sv-avatar-size-default: 38px;
+    }
+
+    .sv-background {
+        --sv-fx-scale: 0.55;
+    }
+
+    .sv-label {
+        max-width: 92px;
+        font-size: 11px;
+    }
+
+    .sv-controls {
+        max-width: calc(100% - 12px);
+    }
+}
+
+/* viewport fallback for the same breakpoints */
+@media (max-width: 1200px) {
+    .sv-scene {
+        --sv-avatar-size-default: 50px;
+        --sv-panel-radius: 12px;
+    }
+
+    .sv-label {
+        font-size: 11px;
+        padding: 2px 8px;
+    }
+}
+
+@media (max-width: 900px) {
+    .sv-scene {
+        --sv-avatar-size-default: 44px;
+        --sv-fx-scale: 0.8;
+    }
+
+    .sv-controls {
+        gap: 4px;
+        padding: 6px 10px;
+        bottom: 12px;
+    }
+
+    .sv-controls button,
+    .sv-controls [role="button"] {
+        min-width: 30px;
+        min-height: 30px;
+    }
+
+}
+
+@media (max-width: 640px) {
+    .sv-scene {
+        --sv-avatar-size-default: 38px;
+        --sv-fx-scale: 0.55;
+    }
+
+    .sv-label {
+        max-width: 92px;
+        font-size: 11px;
+    }
+
+    .sv-controls {
+        max-width: calc(100% - 12px);
+    }
+}
+
+@media (max-height: 520px) {
+    .sv-scene {
+        --sv-avatar-size-default: 36px;
+    }
+
+    .sv-controls {
+        bottom: 8px;
+        padding: 4px 8px;
+    }
+}
+
+/* ==========================================================================
+   13. Motion, inactivity and forced colours
+   ========================================================================== */
+
+/* the scene root may be flagged inactive by the plugin while the call is in a
+   background channel, minimised, or otherwise not visible */
+.sv-scene[data-sv-active="false"] .sv-background::before,
+.sv-scene[data-sv-active="false"] .sv-background::after,
+.sv-scene[data-sv-inactive="true"] .sv-background::before,
+.sv-scene[data-sv-inactive="true"] .sv-background::after,
+.sv-scene.sv-scene--inactive .sv-background::before,
+.sv-scene.sv-scene--inactive .sv-background::after,
+.sv-scene[hidden] .sv-background::before,
+.sv-scene[hidden] .sv-background::after {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .sv-background::before,
+    .sv-background::after,
+    .sv-avatar::after {
+        animation: none !important;
+    }
+
+    .sv-scene .sv-avatar-image,
+    .sv-scene .sv-video,
+    .sv-scene .sv-label,
+    .sv-scene .sv-controls button,
+    .sv-scene .sv-controls [role="button"],
+    .sv-scene .sv-connector {
+        transition-duration: 1ms;
+    }
+}
+
+@media (forced-colors: active) {
+    .sv-video,
+    .sv-controls,
+    .sv-label,
+    .sv-badge {
+        border: 1px solid CanvasText;
+    }
+
+    .sv-connector {
+        stroke: CanvasText;
+        forced-color-adjust: none;
+    }
+
+    .sv-avatar-image {
+        border: 1px solid CanvasText;
+    }
+}
+
+/* more contrast asked for: opaque surfaces, stronger borders and an ink that is
+   pushed away from the background, without changing any palette identity */
+@media (prefers-contrast: more) {
+    .sv-scene {
+        --sv-panel: var(--sv-control-bg);
+        --sv-chip: var(--sv-control-bg);
+        --sv-panel-border: var(--sv-focus);
+        --sv-chip-border: var(--sv-focus);
+        --sv-label-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+        --sv-connector-opacity: 1;
+    }
+
+    .sv-label,
+    .sv-badge {
+        color: var(--sv-ink-bright);
+        border-width: 2px;
+    }
+
+    .sv-status {
+        color: var(--sv-ink-bright);
+    }
+}
+
+/* ==========================================================================
+   14. Themes
+   Each block changes palette, atmosphere and motion only. Layout, positioning,
+   connectors, selection and controls stay identical, so switching a theme never
+   moves a participant or touches the call.
+   ========================================================================== */
+
+/* --- 1. Default, Dark Space ---------------------------------------------- */
+
+.sv-scene[data-sv-theme="dark-space"],
+.sv-scene:not([data-sv-theme]) {
+    --sv-bg-base: #04070f;
+    --sv-live: #e5484d;
+    --sv-orbit-ink: rgba(126, 176, 240, 0.20);
+    --sv-vortex-ink: rgba(120, 180, 255, 0.13);
+    --sv-vortex-core: rgba(196, 232, 255, 0.18);
+    --sv-bg-layers:
+        radial-gradient(120% 92% at 50% 108%, rgba(56, 189, 248, 0.26), transparent 62%),
+        radial-gradient(72% 62% at 20% 16%, rgba(124, 58, 237, 0.24), transparent 70%),
+        radial-gradient(64% 54% at 84% 24%, rgba(37, 99, 235, 0.22), transparent 72%),
+        linear-gradient(180deg, #060c1b 0%, #04070f 56%, #01030a 100%);
+    --sv-haze:
+        radial-gradient(42% 38% at 26% 30%, rgba(139, 92, 246, 0.42), transparent 70%),
+        radial-gradient(38% 34% at 76% 22%, rgba(56, 189, 248, 0.32), transparent 70%),
+        radial-gradient(56% 44% at 50% 96%, rgba(34, 211, 238, 0.36), transparent 72%);
+    --sv-haze-blur: 20px;
+    --sv-haze-duration: 38s;
+    --sv-particles:
+        radial-gradient(1.4px 1.4px at 18% 24%, rgba(255, 255, 255, 0.95), transparent 60%),
+        radial-gradient(1.1px 1.1px at 62% 12%, rgba(198, 226, 255, 0.8), transparent 60%),
+        radial-gradient(1.6px 1.6px at 84% 38%, rgba(255, 255, 255, 0.75), transparent 60%),
+        radial-gradient(1px 1px at 38% 62%, rgba(186, 214, 255, 0.8), transparent 60%),
+        radial-gradient(1.2px 1.2px at 9% 78%, rgba(255, 255, 255, 0.7), transparent 60%),
+        radial-gradient(1px 1px at 72% 88%, rgba(210, 232, 255, 0.7), transparent 60%),
+        radial-gradient(0.9px 0.9px at 52% 44%, rgba(255, 255, 255, 0.6), transparent 60%),
+        radial-gradient(1.3px 1.3px at 28% 8%, rgba(255, 255, 255, 0.65), transparent 60%),
+        radial-gradient(1px 1px at 92% 66%, rgba(255, 255, 255, 0.6), transparent 60%);
+    --sv-particle-size: 480px 480px;
+    --sv-particle-opacity: 0.8;
+    --sv-particle-duration: 90s;
+}
+
+/* --- 2. Aurora, Neon Gradient -------------------------------------------- */
+
+.sv-scene[data-sv-theme="aurora"] {
+    --sv-bg-base: #04121b;
+    --sv-live: #e5484d;
+    --sv-orbit-ink: rgba(126, 235, 216, 0.20);
+    --sv-vortex-ink: rgba(94, 234, 212, 0.13);
+    --sv-vortex-core: rgba(216, 255, 248, 0.18);
+    --sv-bg-layers:
+        radial-gradient(88% 70% at 10% 28%, rgba(16, 185, 129, 0.34), transparent 64%),
+        radial-gradient(76% 58% at 32% 80%, rgba(34, 211, 238, 0.28), transparent 66%),
+        radial-gradient(88% 68% at 90% 24%, rgba(244, 114, 182, 0.3), transparent 66%),
+        radial-gradient(70% 58% at 70% 84%, rgba(139, 92, 246, 0.28), transparent 70%),
+        linear-gradient(158deg, #04121b 0%, #06182b 48%, #050f1c 100%);
+    --sv-haze:
+        linear-gradient(114deg, transparent 18%, rgba(45, 212, 191, 0.34) 36%, transparent 52%, rgba(236, 72, 153, 0.32) 70%, transparent 88%),
+        radial-gradient(40% 34% at 20% 60%, rgba(52, 211, 153, 0.4), transparent 72%),
+        radial-gradient(36% 30% at 78% 48%, rgba(168, 85, 247, 0.42), transparent 72%),
+        radial-gradient(50% 40% at 50% 100%, rgba(56, 189, 248, 0.3), transparent 74%);
+    --sv-haze-blur: 26px;
+    --sv-haze-duration: 26s;
+    --sv-particles:
+        radial-gradient(1.2px 1.2px at 22% 30%, rgba(220, 255, 250, 0.85), transparent 60%),
+        radial-gradient(1px 1px at 68% 18%, rgba(255, 228, 246, 0.8), transparent 60%),
+        radial-gradient(1.4px 1.4px at 86% 52%, rgba(190, 255, 238, 0.7), transparent 60%),
+        radial-gradient(1px 1px at 44% 74%, rgba(226, 232, 255, 0.7), transparent 60%),
+        radial-gradient(1.1px 1.1px at 12% 86%, rgba(255, 214, 240, 0.65), transparent 60%);
+    --sv-particle-size: 520px 520px;
+    --sv-particle-opacity: 0.55;
+    --sv-particle-duration: 80s;
+    --sv-accent: #5eead4;
+    --sv-accent-glow: rgba(94, 234, 212, 0.45);
+    --sv-accent-alt: #f472b6;
+    --sv-line-color: #7ff3e0;
+    --sv-line-highlight: #d8fff8;
+    --sv-line-glow: rgba(94, 234, 212, 0.6);
+    --sv-panel-border: rgba(126, 235, 216, 0.24);
+    --sv-chip-border: rgba(126, 235, 216, 0.22);
+    --sv-focus: #5eead4;
+    --sv-control-border: rgba(126, 235, 216, 0.22);
+    --sv-control-hover: rgba(94, 234, 212, 0.2);
+    --sv-speaking-ring: rgba(153, 246, 228, 0.9);
+    --sv-speaking-glow-color: rgba(94, 234, 212, 0.55);
+}
+
+.sv-scene[data-sv-theme="aurora"] .sv-background::before {
+    animation-name: sv-aurora-flow;
+}
+
+/* --- 3. Sunset, Warm ----------------------------------------------------- */
+
+.sv-scene[data-sv-theme="sunset"] {
+    --sv-bg-base: #180811;
+    --sv-live: #d93b4b;
+    --sv-orbit-ink: rgba(255, 196, 138, 0.22);
+    --sv-vortex-ink: rgba(255, 176, 102, 0.14);
+    --sv-vortex-core: rgba(255, 231, 207, 0.20);
+    --sv-bg-layers:
+        radial-gradient(86% 58% at 50% 104%, rgba(255, 138, 61, 0.46), transparent 62%),
+        radial-gradient(58% 44% at 50% 86%, rgba(255, 209, 102, 0.32), transparent 68%),
+        radial-gradient(78% 60% at 14% 14%, rgba(123, 63, 160, 0.36), transparent 70%),
+        radial-gradient(64% 52% at 88% 18%, rgba(255, 122, 198, 0.24), transparent 72%),
+        linear-gradient(180deg, #2a0f2b 0%, #3d1526 36%, #6b2b2a 72%, #240b11 100%);
+    --sv-haze:
+        radial-gradient(46% 34% at 50% 92%, rgba(255, 170, 92, 0.55), transparent 70%),
+        radial-gradient(40% 30% at 26% 62%, rgba(255, 107, 107, 0.34), transparent 72%),
+        radial-gradient(42% 32% at 76% 58%, rgba(196, 92, 190, 0.32), transparent 72%),
+        linear-gradient(180deg, transparent 40%, rgba(255, 138, 61, 0.16) 74%, transparent 100%);
+    --sv-haze-blur: 24px;
+    --sv-haze-duration: 32s;
+    --sv-particles:
+        radial-gradient(1.4px 1.4px at 26% 22%, rgba(255, 226, 190, 0.85), transparent 60%),
+        radial-gradient(1.1px 1.1px at 64% 16%, rgba(255, 205, 190, 0.8), transparent 60%),
+        radial-gradient(1.6px 1.6px at 84% 40%, rgba(255, 190, 150, 0.7), transparent 60%),
+        radial-gradient(1px 1px at 42% 68%, rgba(255, 224, 236, 0.7), transparent 60%),
+        radial-gradient(1.2px 1.2px at 10% 54%, rgba(255, 210, 170, 0.6), transparent 60%);
+    --sv-particle-size: 560px 560px;
+    --sv-particle-opacity: 0.5;
+    --sv-particle-duration: 100s;
+    --sv-ink: #fff2e8;
+    --sv-ink-dim: #e5bfae;
+    --sv-accent: #ffb066;
+    --sv-accent-glow: rgba(255, 176, 102, 0.45);
+    --sv-accent-alt: #ff7ac6;
+    --sv-line-color: #ffc48a;
+    --sv-line-highlight: #ffe7cf;
+    --sv-line-glow: rgba(255, 176, 102, 0.6);
+    --sv-panel: rgba(32, 10, 14, 0.62);
+    --sv-panel-border: rgba(255, 190, 140, 0.24);
+    --sv-chip: rgba(26, 8, 12, 0.78);
+    --sv-chip-border: rgba(255, 190, 140, 0.24);
+    --sv-focus: #ffc48a;
+    --sv-control-bg: rgba(30, 10, 16, 0.74);
+    --sv-control-border: rgba(255, 190, 140, 0.22);
+    --sv-control-hover: rgba(255, 176, 102, 0.2);
+    --sv-speaking-ring: rgba(255, 196, 138, 0.92);
+    --sv-speaking-glow-color: rgba(255, 150, 90, 0.55);
+}
+
+/* --- 4. Forest, Green ---------------------------------------------------- */
+
+.sv-scene[data-sv-theme="forest"] {
+    --sv-bg-base: #04120b;
+    --sv-live: #d93b4b;
+    --sv-orbit-ink: rgba(134, 226, 170, 0.18);
+    --sv-vortex-ink: rgba(74, 222, 159, 0.12);
+    --sv-vortex-core: rgba(214, 255, 230, 0.16);
+    --sv-bg-layers:
+        radial-gradient(72% 62% at 50% 106%, rgba(46, 230, 160, 0.42), transparent 62%),
+        radial-gradient(42% 36% at 50% 94%, rgba(110, 231, 183, 0.3), transparent 70%),
+        radial-gradient(64% 56% at 6% 100%, rgba(6, 78, 59, 0.92), transparent 68%),
+        radial-gradient(64% 56% at 94% 100%, rgba(6, 78, 59, 0.88), transparent 70%),
+        radial-gradient(58% 46% at 78% 8%, rgba(16, 185, 129, 0.2), transparent 72%),
+        linear-gradient(180deg, #04120b 0%, #05170f 58%, #020a06 100%);
+    --sv-haze:
+        radial-gradient(44% 34% at 50% 96%, rgba(52, 211, 153, 0.5), transparent 70%),
+        radial-gradient(36% 30% at 22% 44%, rgba(16, 185, 129, 0.26), transparent 72%),
+        radial-gradient(34% 30% at 80% 38%, rgba(4, 120, 87, 0.34), transparent 72%);
+    --sv-haze-blur: 30px;
+    --sv-haze-duration: 40s;
+    --sv-particles:
+        radial-gradient(1.6px 1.6px at 24% 28%, rgba(167, 243, 208, 0.7), transparent 60%),
+        radial-gradient(1.2px 1.2px at 70% 20%, rgba(110, 231, 183, 0.6), transparent 60%),
+        radial-gradient(1.8px 1.8px at 86% 46%, rgba(167, 243, 208, 0.55), transparent 60%),
+        radial-gradient(1.1px 1.1px at 40% 66%, rgba(209, 250, 229, 0.55), transparent 60%),
+        radial-gradient(1.4px 1.4px at 12% 74%, rgba(110, 231, 183, 0.5), transparent 60%);
+    --sv-particle-size: 600px 600px;
+    --sv-particle-opacity: 0.42;
+    --sv-particle-duration: 120s;
+    --sv-ink: #e9fff4;
+    --sv-ink-dim: #a8ccb8;
+    --sv-accent: #4ade9f;
+    --sv-accent-glow: rgba(74, 222, 159, 0.4);
+    --sv-accent-alt: #a7f3d0;
+    --sv-line-color: #83e8b4;
+    --sv-line-highlight: #d6ffe6;
+    --sv-line-glow: rgba(74, 222, 159, 0.55);
+    --sv-panel: rgba(4, 20, 12, 0.66);
+    --sv-panel-border: rgba(120, 226, 170, 0.2);
+    --sv-chip: rgba(3, 16, 10, 0.78);
+    --sv-chip-border: rgba(120, 226, 170, 0.2);
+    --sv-focus: #6ee7a8;
+    --sv-control-bg: rgba(4, 18, 11, 0.76);
+    --sv-control-border: rgba(120, 226, 170, 0.2);
+    --sv-control-hover: rgba(74, 222, 159, 0.18);
+    --sv-speaking-ring: rgba(134, 239, 172, 0.9);
+    --sv-speaking-glow-color: rgba(52, 211, 153, 0.55);
+}
+
+/* --- 5. Ocean, Blue ------------------------------------------------------ */
+
+.sv-scene[data-sv-theme="ocean"] {
+    --sv-bg-base: #031726;
+    --sv-live: #e5484d;
+    --sv-orbit-ink: rgba(127, 227, 242, 0.20);
+    --sv-vortex-ink: rgba(56, 217, 232, 0.13);
+    --sv-vortex-core: rgba(216, 247, 255, 0.18);
+    --sv-bg-layers:
+        radial-gradient(78% 64% at 50% 54%, rgba(34, 211, 238, 0.22), transparent 66%),
+        radial-gradient(88% 66% at 50% 108%, rgba(59, 130, 246, 0.3), transparent 66%),
+        radial-gradient(60% 48% at 16% 22%, rgba(20, 184, 166, 0.22), transparent 70%),
+        linear-gradient(180deg, #07283f 0%, #031726 46%, #010a12 100%);
+    --sv-haze:
+        repeating-conic-gradient(from 196deg at 50% 88%, rgba(125, 211, 252, 0.16) 0deg 3deg, transparent 3deg 11deg),
+        radial-gradient(50% 40% at 50% 96%, rgba(34, 211, 238, 0.4), transparent 70%),
+        radial-gradient(34% 30% at 26% 40%, rgba(45, 212, 191, 0.24), transparent 72%),
+        radial-gradient(38% 32% at 76% 30%, rgba(59, 130, 246, 0.3), transparent 72%);
+    --sv-haze-blur: 16px;
+    --sv-haze-duration: 30s;
+    --sv-particles:
+        radial-gradient(2.6px 2.6px at 20% 34%, rgba(186, 230, 253, 0.55), transparent 62%),
+        radial-gradient(1.8px 1.8px at 58% 18%, rgba(165, 243, 252, 0.5), transparent 62%),
+        radial-gradient(3.2px 3.2px at 82% 56%, rgba(191, 232, 255, 0.42), transparent 62%),
+        radial-gradient(2.2px 2.2px at 34% 78%, rgba(186, 230, 253, 0.45), transparent 62%),
+        radial-gradient(1.6px 1.6px at 92% 82%, rgba(224, 242, 254, 0.4), transparent 62%),
+        radial-gradient(2.4px 2.4px at 12% 64%, rgba(165, 243, 252, 0.35), transparent 62%);
+    --sv-particle-size: 440px 440px;
+    --sv-particle-opacity: 0.55;
+    --sv-particle-duration: 64s;
+    --sv-ink: #e6f8ff;
+    --sv-ink-dim: #a2c4d8;
+    --sv-accent: #38d9e8;
+    --sv-accent-glow: rgba(56, 217, 232, 0.42);
+    --sv-accent-alt: #60a5fa;
+    --sv-line-color: #7fe3f2;
+    --sv-line-highlight: #d8f7ff;
+    --sv-line-glow: rgba(56, 217, 232, 0.55);
+    --sv-panel: rgba(3, 20, 34, 0.64);
+    --sv-panel-border: rgba(125, 211, 252, 0.22);
+    --sv-chip: rgba(2, 14, 24, 0.78);
+    --sv-chip-border: rgba(125, 211, 252, 0.2);
+    --sv-focus: #67e8f9;
+    --sv-control-bg: rgba(3, 18, 30, 0.76);
+    --sv-control-border: rgba(125, 211, 252, 0.2);
+    --sv-control-hover: rgba(56, 217, 232, 0.18);
+    --sv-speaking-ring: rgba(103, 232, 249, 0.9);
+    --sv-speaking-glow-color: rgba(34, 211, 238, 0.55);
+}
+
+.sv-scene[data-sv-theme="ocean"] .sv-background::before {
+    animation-name: sv-ocean-sway;
+}
+
+/* --- 6. Cyberpunk, Purple and Pink --------------------------------------- */
+
+.sv-scene[data-sv-theme="cyberpunk"] {
+    --sv-bg-base: #0b0418;
+    --sv-live: #e5484d;
+    --sv-orbit-ink: rgba(255, 158, 205, 0.22);
+    --sv-vortex-ink: rgba(255, 45, 149, 0.13);
+    --sv-vortex-core: rgba(255, 227, 242, 0.18);
+    --sv-bg-layers:
+        radial-gradient(64% 48% at 50% 108%, rgba(255, 45, 149, 0.38), transparent 66%),
+        radial-gradient(56% 44% at 18% 30%, rgba(139, 92, 246, 0.34), transparent 68%),
+        radial-gradient(54% 42% at 84% 22%, rgba(34, 211, 238, 0.24), transparent 70%),
+        linear-gradient(180deg, #120527 0%, #170826 46%, #08030f 100%);
+    --sv-haze:
+        radial-gradient(40% 30% at 50% 98%, rgba(255, 45, 149, 0.5), transparent 70%),
+        radial-gradient(34% 30% at 22% 70%, rgba(168, 85, 247, 0.42), transparent 72%),
+        radial-gradient(30% 26% at 76% 62%, rgba(34, 211, 238, 0.34), transparent 72%),
+        linear-gradient(180deg, transparent 55%, rgba(80, 20, 120, 0.28) 82%, rgba(10, 3, 20, 0.9) 100%);
+    --sv-haze-blur: 22px;
+    --sv-haze-duration: 18s;
+    --sv-particles:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px);
+    --sv-particle-size: 100% 3px;
+    --sv-particle-opacity: 0.6;
+    --sv-particle-duration: 24s;
+    --sv-ink: #f5ecff;
+    --sv-ink-dim: #c3a9e0;
+    --sv-accent: #ff2d95;
+    --sv-accent-glow: rgba(255, 45, 149, 0.45);
+    --sv-accent-alt: #22d3ee;
+    --sv-line-color: #ff9ecd;
+    --sv-line-highlight: #ffe3f2;
+    --sv-line-glow: rgba(255, 45, 149, 0.6);
+    --sv-panel: rgba(16, 6, 30, 0.66);
+    --sv-panel-border: rgba(255, 105, 180, 0.26);
+    --sv-chip: rgba(12, 4, 24, 0.8);
+    --sv-chip-border: rgba(255, 105, 180, 0.24);
+    --sv-focus: #ff8ac4;
+    --sv-control-bg: rgba(14, 5, 26, 0.78);
+    --sv-control-border: rgba(255, 105, 180, 0.24);
+    --sv-control-hover: rgba(255, 45, 149, 0.22);
+    --sv-speaking-ring: rgba(255, 138, 196, 0.92);
+    --sv-speaking-glow-color: rgba(255, 45, 149, 0.55);
+}
+
+.sv-scene[data-sv-theme="cyberpunk"] .sv-background::before {
+    animation-name: sv-neon-flicker;
+    animation-duration: 9s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+/* --- 7. Minimal, light --------------------------------------------------- */
+
+.sv-scene[data-sv-theme="minimal"] {
+    --sv-bg-base: #f3f6fb;
+    --sv-live: #c0272d;
+    --sv-orbit-ink: rgba(37, 99, 235, 0.16);
+    --sv-vortex-ink: rgba(37, 99, 235, 0.07);
+    --sv-vortex-core: rgba(255, 255, 255, 0.9);
+    --sv-bg-layers:
+        radial-gradient(66% 56% at 50% 104%, rgba(147, 180, 216, 0.34), transparent 66%),
+        radial-gradient(52% 44% at 18% 10%, rgba(255, 255, 255, 0.95), transparent 70%),
+        radial-gradient(46% 40% at 86% 16%, rgba(219, 234, 254, 0.8), transparent 72%),
+        linear-gradient(180deg, #ffffff 0%, #eef2f8 56%, #e2e8f2 100%);
+    --sv-haze:
+        radial-gradient(42% 36% at 28% 42%, rgba(147, 197, 253, 0.32), transparent 70%),
+        radial-gradient(36% 30% at 76% 34%, rgba(199, 210, 254, 0.4), transparent 72%),
+        radial-gradient(48% 38% at 50% 96%, rgba(96, 165, 250, 0.26), transparent 72%);
+    --sv-haze-blur: 26px;
+    --sv-haze-duration: 44s;
+    --sv-particles:
+        radial-gradient(1.6px 1.6px at 30% 30%, rgba(51, 102, 180, 0.16), transparent 60%),
+        radial-gradient(1.2px 1.2px at 72% 22%, rgba(51, 102, 180, 0.14), transparent 60%),
+        radial-gradient(1.8px 1.8px at 86% 58%, rgba(51, 102, 180, 0.12), transparent 60%),
+        radial-gradient(1.2px 1.2px at 44% 74%, rgba(51, 102, 180, 0.14), transparent 60%);
+    --sv-particle-size: 520px 520px;
+    --sv-particle-opacity: 0.5;
+    --sv-particle-duration: 120s;
+    --sv-line-mult: 1.35;
+    --sv-ink: #0b1220;
+    --sv-ink-dim: #445066;
+    --sv-ink-bright: #020617;
+    --sv-label-shadow: none;
+    --sv-accent: #2563eb;
+    --sv-accent-glow: rgba(37, 99, 235, 0.35);
+    --sv-accent-alt: #0ea5e9;
+    --sv-line-color: #2f63c4;
+    --sv-line-highlight: #1d4ed8;
+    --sv-line-glow: rgba(37, 99, 235, 0.4);
+    --sv-panel: rgba(255, 255, 255, 0.92);
+    --sv-panel-border: rgba(15, 23, 42, 0.16);
+    --sv-panel-shadow: 0 16px 36px -20px rgba(15, 23, 42, 0.45);
+    --sv-chip: rgba(255, 255, 255, 0.94);
+    --sv-chip-border: rgba(15, 23, 42, 0.16);
+    --sv-focus: #1d4ed8;
+    --sv-control-bg: rgba(255, 255, 255, 0.95);
+    --sv-control-border: rgba(15, 23, 42, 0.14);
+    --sv-control-hover: rgba(37, 99, 235, 0.12);
+    --sv-danger: #c0272d;
+    --sv-speaking-ring: rgba(29, 78, 216, 0.85);
+    --sv-speaking-glow-color: rgba(37, 99, 235, 0.28);
+}
+
+/* --- 8. Dark Red, Aesthetic ---------------------------------------------- */
+
+.sv-scene[data-sv-theme="dark-red"] {
+    --sv-bg-base: #070203;
+    --sv-live: #d93b4b;
+    --sv-orbit-ink: rgba(255, 169, 175, 0.20);
+    --sv-vortex-ink: rgba(224, 35, 59, 0.12);
+    --sv-vortex-core: rgba(255, 228, 230, 0.16);
+    --sv-bg-layers:
+        radial-gradient(80% 62% at 50% 106%, rgba(224, 35, 59, 0.42), transparent 62%),
+        radial-gradient(46% 38% at 50% 92%, rgba(255, 90, 104, 0.26), transparent 70%),
+        radial-gradient(60% 50% at 12% 18%, rgba(127, 29, 45, 0.5), transparent 72%),
+        radial-gradient(56% 46% at 88% 24%, rgba(90, 12, 24, 0.55), transparent 74%),
+        linear-gradient(180deg, #12050a 0%, #070203 54%, #030101 100%);
+    --sv-haze:
+        radial-gradient(44% 34% at 50% 96%, rgba(224, 35, 59, 0.55), transparent 70%),
+        radial-gradient(34% 28% at 22% 52%, rgba(127, 29, 45, 0.42), transparent 72%),
+        radial-gradient(32% 28% at 80% 46%, rgba(159, 18, 57, 0.4), transparent 72%);
+    --sv-haze-blur: 24px;
+    --sv-haze-duration: 36s;
+    --sv-particles:
+        radial-gradient(1.3px 1.3px at 26% 26%, rgba(255, 205, 205, 0.8), transparent 60%),
+        radial-gradient(1px 1px at 66% 18%, rgba(255, 180, 180, 0.7), transparent 60%),
+        radial-gradient(1.5px 1.5px at 84% 44%, rgba(255, 160, 160, 0.6), transparent 60%),
+        radial-gradient(1px 1px at 42% 70%, rgba(255, 200, 200, 0.6), transparent 60%),
+        radial-gradient(1.2px 1.2px at 12% 60%, rgba(255, 175, 175, 0.5), transparent 60%);
+    --sv-particle-size: 500px 500px;
+    --sv-particle-opacity: 0.5;
+    --sv-particle-duration: 110s;
+    --sv-ink: #ffeef0;
+    --sv-ink-dim: #d3a7ad;
+    --sv-accent: #ff4d5e;
+    --sv-accent-glow: rgba(255, 77, 94, 0.42);
+    --sv-accent-alt: #e0233b;
+    --sv-line-color: #ffa9af;
+    --sv-line-highlight: #ffe4e6;
+    --sv-line-glow: rgba(224, 35, 59, 0.6);
+    --sv-panel: rgba(16, 3, 6, 0.68);
+    --sv-panel-border: rgba(255, 120, 130, 0.22);
+    --sv-chip: rgba(12, 2, 4, 0.8);
+    --sv-chip-border: rgba(255, 120, 130, 0.22);
+    --sv-focus: #ff8a92;
+    --sv-control-bg: rgba(14, 3, 6, 0.78);
+    --sv-control-border: rgba(255, 120, 130, 0.2);
+    --sv-control-hover: rgba(224, 35, 59, 0.24);
+    --sv-speaking-ring: rgba(255, 138, 146, 0.92);
+    --sv-speaking-glow-color: rgba(224, 35, 59, 0.55);
+}
+
+/* --- 9. Purple Galaxy, Space Dust ---------------------------------------- */
+
+.sv-scene[data-sv-theme="purple-galaxy"] {
+    --sv-bg-base: #08031a;
+    --sv-live: #e5484d;
+    --sv-orbit-ink: rgba(192, 132, 252, 0.20);
+    --sv-vortex-ink: rgba(168, 85, 247, 0.13);
+    --sv-vortex-core: rgba(243, 232, 255, 0.18);
+    --sv-bg-layers:
+        radial-gradient(76% 60% at 50% 106%, rgba(168, 85, 247, 0.34), transparent 64%),
+        radial-gradient(62% 52% at 22% 22%, rgba(76, 29, 149, 0.6), transparent 70%),
+        radial-gradient(56% 46% at 82% 30%, rgba(232, 121, 249, 0.26), transparent 72%),
+        radial-gradient(70% 56% at 50% 60%, rgba(49, 20, 94, 0.55), transparent 76%),
+        linear-gradient(180deg, #0d0524 0%, #08031a 52%, #040110 100%);
+    --sv-haze:
+        radial-gradient(40% 34% at 28% 34%, rgba(168, 85, 247, 0.48), transparent 70%),
+        radial-gradient(36% 30% at 72% 26%, rgba(232, 121, 249, 0.4), transparent 72%),
+        radial-gradient(44% 36% at 54% 96%, rgba(139, 92, 246, 0.42), transparent 72%);
+    --sv-haze-blur: 22px;
+    --sv-haze-duration: 42s;
+    --sv-particles:
+        radial-gradient(1.5px 1.5px at 16% 22%, rgba(255, 255, 255, 0.95), transparent 60%),
+        radial-gradient(1.1px 1.1px at 58% 14%, rgba(233, 213, 255, 0.85), transparent 60%),
+        radial-gradient(1.8px 1.8px at 82% 36%, rgba(255, 255, 255, 0.8), transparent 60%),
+        radial-gradient(1px 1px at 34% 58%, rgba(216, 180, 254, 0.85), transparent 60%),
+        radial-gradient(1.3px 1.3px at 8% 72%, rgba(255, 255, 255, 0.7), transparent 60%),
+        radial-gradient(1px 1px at 70% 84%, rgba(233, 213, 255, 0.7), transparent 60%),
+        radial-gradient(0.9px 0.9px at 48% 40%, rgba(255, 255, 255, 0.6), transparent 60%),
+        radial-gradient(1.4px 1.4px at 92% 62%, rgba(245, 214, 255, 0.6), transparent 60%),
+        radial-gradient(1px 1px at 24% 92%, rgba(255, 255, 255, 0.5), transparent 60%);
+    --sv-particle-size: 420px 420px;
+    --sv-particle-opacity: 0.9;
+    --sv-particle-duration: 84s;
+    --sv-ink: #f6efff;
+    --sv-ink-dim: #bfa9e0;
+    --sv-accent: #c084fc;
+    --sv-accent-glow: rgba(192, 132, 252, 0.45);
+    --sv-accent-alt: #e879f9;
+    --sv-line-color: #dbb8ff;
+    --sv-line-highlight: #f6eeff;
+    --sv-line-glow: rgba(192, 132, 252, 0.6);
+    --sv-panel: rgba(11, 4, 26, 0.66);
+    --sv-panel-border: rgba(196, 160, 255, 0.24);
+    --sv-chip: rgba(8, 3, 20, 0.8);
+    --sv-chip-border: rgba(196, 160, 255, 0.22);
+    --sv-focus: #d8b4fe;
+    --sv-control-bg: rgba(10, 3, 22, 0.78);
+    --sv-control-border: rgba(196, 160, 255, 0.22);
+    --sv-control-hover: rgba(192, 132, 252, 0.2);
+    --sv-speaking-ring: rgba(216, 180, 254, 0.92);
+    --sv-speaking-glow-color: rgba(192, 132, 252, 0.55);
+}
+
+.sv-scene[data-sv-theme="purple-galaxy"] .sv-background::before {
+    animation-name: sv-slow-pulse;
+    animation-duration: 28s;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+/* ==========================================================================
+   15. Call focus toggle
+
+   The corner control that owns the window: a compact dark circle that hands
+   the window back to Discord's own interface, or takes it away again. It is
+   the one element here that may live outside .sv-scene (in Discord's call
+   header), so it is scoped by its own class only and every colour is a theme
+   token with the dark palette as the fallback. callFocus.tsx owns rendering,
+   the placement host, the accessible name and the behaviour; this section owns
+   only how it looks and how it answers a pointer, a key and a reduced-motion
+   or forced-colours setting.
+
+     .sv-call-focus-toggle[aria-pressed][data-sv-focused="true|false"]
+       svg | .sv-call-focus-chevron     the chevron, authored pointing right
+
+   data-sv-focused="true" is the call owning the window with Discord's
+   interface hidden, so the chevron stays as authored and points right, at the
+   interface a press brings back. data-sv-focused="false" is that interface on
+   screen, so the chevron reverses and points left, at the call a press hands
+   the window back to. That is the disclosure convention either way: the arrow
+   points at whatever the press opens.
+
+   One reversal, never two: the glyph is authored pointing right and this file
+   turns it. A chevron the renderer draws leftwards already marks itself
+   data-sv-chevron="left", and the reversal selector skips it, so a swapped
+   path and a rotated one cannot cancel out into a rightward arrow.
+   ========================================================================== */
+
+.sv-call-focus-toggle {
+    position: absolute;
+    top: var(--sv-call-focus-inset, 12px);
+    inset-inline-start: var(--sv-call-focus-inset, 12px);
+    /* Above Discord's own call header, which lives in the same call root inside
+       a `z-index: 1001` layer (`videoControls`). At 30 the chevron painted under
+       that header's back control in the windowed call view and lost the hit
+       test: measured on 2026-10-29, a real pointer at the chevron's own centre
+       resolved to the header's icon, so the press never reached this button. */
+    z-index: 1100;
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    border: 1px solid var(--sv-control-border, rgba(140, 190, 255, 0.2));
+    border-radius: 50%;
+    background-color: var(--sv-control-bg, rgba(8, 14, 28, 0.74));
+    -webkit-backdrop-filter: blur(6px) saturate(1.15);
+    backdrop-filter: blur(6px) saturate(1.15);
+    color: var(--sv-ink-dim, #a9bbd8);
+    /* one soft shadow: the control is a hint in the corner, not a chip sitting
+       on the call */
+    box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.9);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
+    font: inherit;
+    transition:
+        background-color var(--sv-motion-duration, 160ms) ease,
+        border-color var(--sv-motion-duration, 160ms) ease,
+        color var(--sv-motion-duration, 160ms) ease,
+        box-shadow var(--sv-motion-duration, 160ms) ease;
+}
+
+/* A host that already places the control in its own flow, the way Discord's
+   call header puts it in the row before the participant pill, sets
+   data-sv-placement="inline": the corner inset then applies to nothing and the
+   control keeps its size, ring and states. */
+.sv-call-focus-toggle[data-sv-placement="inline"] {
+    position: relative;
+    top: auto;
+    inset-inline-start: auto;
+}
+
+/* A button the caller hides is hidden: the rule above sets a display, which
+   would otherwise beat the browser's own [hidden] rule. */
+.sv-call-focus-toggle[hidden] {
+    display: none;
+}
+
+.sv-call-focus-toggle svg,
+.sv-call-focus-toggle .sv-call-focus-chevron {
+    display: block;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    overflow: visible;
+    color: inherit;
+    transform: rotate(0deg);
+    pointer-events: none;
+    transition: transform var(--sv-motion-duration, 160ms) ease;
+}
+
+/* Reversed while Discord's interface is on screen, and only when the glyph was
+   authored pointing right. callFocus.ts may draw the leftward path itself and
+   marks that path data-sv-chevron="left"; rotating that one again would point it
+   back to the right, which is the double reversal this selector exists to avoid. */
+.sv-call-focus-toggle[data-sv-focused="false"] svg:not(:has([data-sv-chevron="left"])),
+.sv-call-focus-toggle[data-sv-focused="false"] .sv-call-focus-chevron:not([data-sv-chevron="left"]) {
+    transform: rotate(180deg);
+}
+
+.sv-call-focus-toggle:hover {
+    color: var(--sv-ink, #eef4ff);
+    border-color: var(--sv-accent-glow, rgba(90, 209, 255, 0.42));
+    background-color: var(--sv-control-hover, rgba(90, 209, 255, 0.2));
+    box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.95);
+}
+
+/* no transform here: the press reads as a dimmer surface, so the control never
+   moves under the pointer and the avatar-scaling contract stays untouched */
+.sv-call-focus-toggle:active {
+    background-color: var(--sv-control-hover, rgba(90, 209, 255, 0.2));
+    box-shadow: 0 0 0 1px var(--sv-accent-glow, rgba(90, 209, 255, 0.42)) inset;
+}
+
+.sv-call-focus-toggle:focus-visible {
+    color: var(--sv-ink-bright, #ffffff);
+    outline: 2px solid var(--sv-focus, #7dd3fc);
+    outline-offset: 2px;
+    border-radius: 50%;
+}
+
+.sv-call-focus-toggle:disabled,
+.sv-call-focus-toggle[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.9);
+}
+
+/* the disclosure glyph turns; nothing else does */
+@media (prefers-reduced-motion: reduce) {
+    .sv-call-focus-toggle,
+    .sv-call-focus-toggle svg,
+    .sv-call-focus-toggle .sv-call-focus-chevron {
+        transition-duration: 1ms;
+    }
+}
+
+/* a forced-colours engine draws the control itself: real system colours, and
+   the chevron keeps inheriting them through currentColor */
+@media (forced-colors: active) {
+    .sv-call-focus-toggle {
+        border: 1px solid CanvasText;
+        background-color: Canvas;
+        color: CanvasText;
+        box-shadow: none;
+    }
+
+    .sv-call-focus-toggle:hover,
+    .sv-call-focus-toggle:active {
+        background-color: Highlight;
+        color: HighlightText;
+    }
+}
+
+/* more contrast asked for: an opaque surface, a heavier edge and the theme's
+   own brightest ink, so the control is findable on any backdrop */
+@media (prefers-contrast: more) {
+    .sv-call-focus-toggle {
+        background-color: var(--sv-control-bg, #0b1220);
+        border-width: 2px;
+        border-color: var(--sv-focus, #7dd3fc);
+        color: var(--sv-ink-bright, #ffffff);
+    }
+}
+
+/* Discord's own light theme, when the control sits in Discord's chrome and no
+   scene theme supplies the tokens. The :not() guard keeps it out of a scene,
+   where the palette above is the authority even on a light Discord. */
+:where(html.theme-light) .sv-call-focus-toggle:not(.sv-scene *) {
+    background-color: rgba(255, 255, 255, 0.94);
+    border-color: rgba(15, 23, 42, 0.14);
+    color: #445066;
+    box-shadow: 0 6px 16px -12px rgba(15, 23, 42, 0.4);
+}
+
+:where(html.theme-light) .sv-call-focus-toggle:not(.sv-scene *):hover {
+    background-color: rgba(37, 99, 235, 0.12);
+    border-color: rgba(37, 99, 235, 0.4);
+    color: #0b1220;
+}
+

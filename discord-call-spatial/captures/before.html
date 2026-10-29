@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Before: the same scene with the previous style.css and layout</title>
+<link rel="stylesheet" href="_old-style.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #000; }
+  #stage { width: 1024px; height: 572px; }
+  #stage > .sv-scene { width: 1024px; height: 572px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script type="application/json" id="fixture">{"selected": [{"id": "p0", "kind": "video", "x": 282, "y": 128, "width": 461, "height": 259, "selected": true}, {"id": "p1", "kind": "avatar", "x": 842, "y": 77, "width": 35, "height": 35, "selected": false}, {"id": "p10", "kind": "avatar", "x": 31, "y": 124, "width": 34, "height": 34, "selected": false}, {"id": "p11", "kind": "avatar", "x": 929, "y": 400, "width": 35, "height": 35, "selected": false}, {"id": "p2", "kind": "avatar", "x": 54, "y": 249, "width": 32, "height": 32, "selected": false}, {"id": "p6", "kind": "video", "x": 855, "y": 225, "width": 159, "height": 89, "selected": false}, {"id": "p7", "kind": "avatar", "x": 138, "y": 396, "width": 35, "height": 35, "selected": false}], "overview": [{"id": "p0", "kind": "video", "x": 643, "y": 82, "width": 169, "height": 95, "selected": false}, {"id": "p1", "kind": "avatar", "x": 842, "y": 77, "width": 35, "height": 35, "selected": false}, {"id": "p10", "kind": "avatar", "x": 31, "y": 124, "width": 34, "height": 34, "selected": false}, {"id": "p11", "kind": "avatar", "x": 929, "y": 400, "width": 35, "height": 35, "selected": false}, {"id": "p12", "kind": "video", "x": 427, "y": 65, "width": 168, "height": 95, "selected": false}, {"id": "p13", "kind": "avatar", "x": 291, "y": 100, "width": 34, "height": 34, "selected": false}, {"id": "p2", "kind": "avatar", "x": 54, "y": 249, "width": 32, "height": 32, "selected": false}, {"id": "p3", "kind": "video", "x": 244, "y": 218, "width": 143, "height": 80, "selected": false}, {"id": "p4", "kind": "avatar", "x": 459, "y": 250, "width": 34, "height": 34, "selected": false}, {"id": "p5", "kind": "avatar", "x": 692, "y": 272, "width": 35, "height": 35, "selected": false}, {"id": "p6", "kind": "video", "x": 855, "y": 225, "width": 159, "height": 89, "selected": false}, {"id": "p7", "kind": "avatar", "x": 138, "y": 396, "width": 35, "height": 35, "selected": false}, {"id": "p8", "kind": "avatar", "x": 313, "y": 379, "width": 34, "height": 34, "selected": false}, {"id": "p9", "kind": "video", "x": 433, "y": 364, "width": 151, "height": 85, "selected": false}]}</script>
+<script>
+const FIXTURE = JSON.parse(document.getElementById("fixture").textContent);
+const NAMES = ["Kaito", "Koh", "Ghcol", "Luna", "Voz", "Tara", "Ivy", "Sora", "Milo", "Vor", "Zyro", "Kali", "Nyx", "Jaco"];
+const AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect width='96' height='96' fill='%23253145'/%3E%3Ccircle cx='48' cy='38' r='17' fill='%23c7d6ea'/%3E%3Crect x='20' y='62' width='56' height='34' rx='17' fill='%23c7d6ea'/%3E%3C/svg%3E";
+const CAMERA = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='180'%3E%3Crect width='320' height='180' fill='%23202b3d'/%3E%3Ccircle cx='160' cy='72' r='34' fill='%23435a78'/%3E%3Crect x='86' y='112' width='148' height='68' rx='34' fill='%23435a78'/%3E%3C/svg%3E";
+const state = new URLSearchParams(location.search).get("state") === "overview" ? "overview" : "selected";
+const items = FIXTURE[state];
+const W = 1024, H = 572;
+const lines = items.map((item) => {
+  const x = item.x + item.width / 2, y = item.y + item.height / 2;
+  return `<line class="sv-connector" x1="${W/2}" y1="${H*0.9}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"></line>`;
+}).join("");
+const people = items.map((item) => {
+  const name = NAMES[Number(item.id.slice(1))];
+  const selected = item.selected;
+  const cx = ((item.x + item.width / 2) / W) * 100;
+  const cy = ((item.y + item.height / 2) / H) * 100;
+  const media = item.kind === "video"
+    ? `<div class="sv-video" data-sv-selected="${selected}" style="width:${item.width}px;height:${item.height}px"><img src="${CAMERA}" alt="">${selected ? '<span class="sv-badge">Live</span>' : ""}</div>`
+    : `<div class="sv-avatar" style="width:${item.width}px;height:${item.height}px"><img class="sv-avatar-image" src="${AVATAR}" alt=""></div>`;
+  return `<div class="sv-participant" data-sv-selected="${selected}" data-sv-speaking="false" data-sv-camera="${item.kind === "video" ? "on" : "off"}" role="button" tabindex="0" aria-label="${name}" style="left:${cx.toFixed(2)}%;top:${cy.toFixed(2)}%">${media}<span class="sv-label">${name}</span></div>`;
+}).join("");
+document.getElementById("stage").innerHTML = `<div class="sv-scene" data-sv-theme="dark-space" data-sv-scheme="dark">
+  <div class="sv-background" aria-hidden="true"></div>
+  <div class="sv-connectors" aria-hidden="true"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg></div>
+  ${people}
+  <div class="sv-controls" role="toolbar" aria-label="Call controls (simulated)">
+    <button type="button">Mic</button><button type="button">Cam</button><button type="button">Share</button><button type="button">35</button><button type="button" class="buttonDanger">Leave</button>
+  </div>
+</div>`;
+</script>
+</body>
+</html>
